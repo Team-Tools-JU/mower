@@ -4,6 +4,7 @@
 #include <MeSerial.h>
 #include <MeAuriga.h>
 
+#include "motor.h"
 
 MeSerial meSerial(PORT5);
 
@@ -80,13 +81,16 @@ void setup() {
   delay(1000);
 
   // MOVE FUNCTION ????
-  move(1, 50 / 100.0 * 255);
+  //move(1, 50 / 100.0 * 255);
 
 
   // This makes the mBot STOP moving
   Encoder_1.setTarPWM(0);
   Encoder_2.setTarPWM(0);
   delay(500);
+
+
+  // motorTextTest();
 
   meSerial.sendString("SETUP DONE");
 }
