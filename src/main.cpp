@@ -3,12 +3,17 @@
 #include <Wire.h>
 #include <MeSerial.h>
 #include <MeAuriga.h>
+#include <MeBluetooth.h>
+#include <string.h>
 
 
 MeSerial meSerial(PORT5);
 
 MeEncoderOnBoard Encoder_1(SLOT1);
 MeEncoderOnBoard Encoder_2(SLOT2);
+//SoftwareSerial BtSerial(PE0, PE1);
+
+char test;
 
 
 // WHat is dis?
@@ -60,8 +65,10 @@ void move(int direction, int speed)
 
 
 void setup() {
+ // BtSerial.begin(115200);
+ 
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(115200);
   meSerial.begin(9600);
   //mySerial.begin(9600);
 
@@ -97,11 +104,19 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   
+  
 
-  //delay(1000);
-
-  Encoder_1.loop();
-  Encoder_2.loop();
+  delay(1000);
+  if (Serial.available()){
+    test = Serial.read();
+    meSerial.sendString("Hello World");
+    Serial.print("master");
+    /*if(BtSerial.availableForWrite()){
+      BtSerial.print("recieved");
+    }*/
+  }
+  //Encoder_1.loop();
+  //Encoder_2.loop();
 
 
 
