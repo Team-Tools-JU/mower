@@ -5,6 +5,19 @@
 #include <MeAuriga.h>
 
 
+
+// Enumeration for mower states
+typedef enum {
+  MOWER_IDLE = 0,
+  MOWER_AUTO_RUN,
+  MOWER_MAN_FORWARD,
+  MOWER_MAN_BACKWARDS,
+  MOWER_MAN_LEFT,
+  MOWER_MAN_RIGHT,
+  MOWER_FAULT = 99
+} mower_state_t;
+
+
 MeSerial meSerial(PORT5);
 
 MeEncoderOnBoard Encoder_1(SLOT1);
@@ -13,6 +26,12 @@ MeEncoderOnBoard Encoder_2(SLOT2);
 
 // WHat is dis?
 MeLightSensor lightsensor_12(12);
+
+
+//state machine for mower
+void mower_drive_state(mower_state_t state);
+
+
 
 
 void isr_process_encoder1(void)
@@ -94,6 +113,8 @@ void setup() {
 
 
 
+
+
 void loop() {
   // put your main code here, to run repeatedly:
   
@@ -104,5 +125,38 @@ void loop() {
   Encoder_2.loop();
 
 
+
+}
+
+
+void mower_drive_state(mower_state_t state){
+  switch(state){
+    case MOWER_IDLE:
+      //motor speed 0
+      break;
+    case MOWER_AUTO_RUN:
+      //If obsticle ->reverse and turn 
+      //else forward
+      break;
+    case MOWER_MAN_FORWARD:
+      //Move forward
+      break;
+    case MOWER_MAN_BACKWARDS:
+      //Move backwards
+      break;
+    case MOWER_MAN_LEFT:
+      //Move left
+      break;
+    case MOWER_MAN_RIGHT:
+      //Move right
+      break;
+
+    case MOWER_FAULT:
+      //error handling
+      break;
+
+    default:
+      break;
+  }
 
 }
