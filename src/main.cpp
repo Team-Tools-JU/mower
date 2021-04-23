@@ -22,11 +22,14 @@ typedef enum {
 } mower_state_t;
 
 
+//globals
+
+mower_state_t mower_state_global = MOWER_IDLE;
+
 MeSerial meSerial(PORT5);
 MeEncoderOnBoard leftMotor(SLOT1);
 MeEncoderOnBoard rightMotor(SLOT2);
 MeLightSensor lightsensor_12(12);
-
 //MeAuriga functions, Don't use!
 void isr_process_leftMotor(void);
 void isr_process_rightMotor(void);
@@ -45,7 +48,7 @@ String Read();
 void Write(char ch);
 void Write(String string);
 
-void mower_drive_state(mower_state_t state);
+void mower_drive_state(void);
 
 
 
@@ -69,9 +72,11 @@ void setup() {
 
 void loop() {
 
-  moveStop();
-  leftMotor.setTarPWM(0);
-  rightMotor.setTarPWM(0);
+  //read bt
+
+  mower_drive_state();
+
+  
   _loop();
 }
 
@@ -186,30 +191,34 @@ void Write(String string){
 }
 
 
-void mower_drive_state(mower_state_t state){
-  switch(state){
+void mower_drive_state(){
+  switch(mower_state_global){
     case MOWER_IDLE:
-      //motor speed 0
+      moveStop();
       break;
     case MOWER_AUTO_RUN:
-      //If obsticle ->reverse and turn 
-      //else forward
+      if(0){
+        //If obsticle ->reverse and turn 
+      }else{
+        moveForward();
+      }
       break;
     case MOWER_MAN_FORWARD:
-      //Move forward
+      moveForward();
       break;
     case MOWER_MAN_BACKWARDS:
-      //Move backwards
+      moveBackward();
       break;
     case MOWER_MAN_LEFT:
-      //Move left
+      moveLeft();
       break;
     case MOWER_MAN_RIGHT:
-      //Move right
+      moveRight();
       break;
 
     case MOWER_FAULT:
       //error handling
+      
       break;
 
     default:
