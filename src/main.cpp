@@ -58,7 +58,7 @@ void updateState(String data);
 
 
 
-void mower_drive_state(void);
+void mowerDriveState(void);
 
 
 
@@ -98,7 +98,7 @@ void loop() {
   //Serial.print()
   //Write(test);
   
-  mower_drive_state();
+  mowerDriveState();
   _loop();
 }
 
@@ -255,28 +255,28 @@ void updateState(String data){
   //Write(data);
   //Serial.print(data);
   if(data == "AR"){
-    mower_state_global = MOWER_AUTO_RUN;
+    mowerStateGlobal = MOWER_AUTO_RUN;
     Write("Inne i AR");
   }
   else if(data=="AS"){
-    mower_state_global =  MOWER_IDLE;
+    mowerStateGlobal =  MOWER_IDLE;
     Write("Inne i AS");
   }
   else if(data=="MF"){
-    mower_state_global = MOWER_MAN_FORWARD;
+    mowerStateGlobal = MOWER_MAN_FORWARD;
     Write("Inne i MF");
   }
   else if(data=="MB"){
-    mower_state_global = MOWER_MAN_BACKWARDS;
+    mowerStateGlobal = MOWER_MAN_BACKWARDS;
     Write("Inne i MB");
   }
   else if(data=="ML"){
-    mower_state_global = MOWER_MAN_LEFT;
+    mowerStateGlobal = MOWER_MAN_LEFT;
     Write("Inne i ML");
 
   }
   else if(data=="MR"){
-    mower_state_global = MOWER_MAN_RIGHT;
+    mowerStateGlobal = MOWER_MAN_RIGHT;
     Write("Inne i MR");
   }
   /* else{
@@ -286,8 +286,8 @@ void updateState(String data){
 }
 
 
-void mower_drive_state(){
-  switch(mower_state_global){
+void mowerDriveState(){
+  switch(mowerStateGlobal){
     case MOWER_IDLE:
       moveStop();
       break;
