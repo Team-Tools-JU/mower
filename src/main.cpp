@@ -20,12 +20,12 @@ typedef enum {
   MOWER_MAN_LEFT,
   MOWER_MAN_RIGHT,
   MOWER_FAULT = 99
-} mower_state_t;
+} mowerState_t;
 
 
 //globals
 
-mower_state_t mower_state_global = MOWER_IDLE;
+mowerState_t mowerStateGlobal = MOWER_IDLE;
 
 MeSerial meSerial(PORT5);
 MeEncoderOnBoard leftMotor(SLOT1);
