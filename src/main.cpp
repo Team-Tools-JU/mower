@@ -30,9 +30,10 @@ mowerState_t mowerStateGlobal = MOWER_IDLE;
 MeSerial meSerial(PORT5);
 MeEncoderOnBoard leftMotor(SLOT1);
 MeEncoderOnBoard rightMotor(SLOT2);
-MeLightSensor lightsensor_12(12);
 
-MeLineFollower linefollower_7(7); //Line follow sensor on port 6
+MeUltrasonicSensor ultrasonic_6(6); //Ultrasonic sensor on port 6
+MeLineFollower linefollower_7(7);   //Line follow sensor on port 7
+
 
 //MeAuriga functions, Don't use!
 void isr_process_leftMotor(void);
@@ -41,15 +42,20 @@ void move(int direction, int speed);
 void _loop();
 void _delay(float seconds);
 
-//Private functions.
+//----Private function list----//
+//Move functions
 void moveForward();
 void moveBackward();
 void moveLeft();
 void moveRight();
 void moveStop();
+
+//Sensor fuctions
 boolean isBlackLine();
 void collision();
+int ultraSonicDistance();
 
+//Bluetooth functions
 String Read();
 void Write(char ch);
 void Write(String string);
@@ -83,14 +89,12 @@ void setup() {
 
 
 void loop() {
-  isBlackLine();
 
+  
+  
+  String btdata = Read();
+  String data = btdata.substring(0,2);
 
-  //String btdata = Read();
-
-
-  //String data = btdata.substring(0,2);
-  String data = "AR";
   
   if (data != "" && data != nullptr){
     //test = data;
@@ -108,30 +112,45 @@ void loop() {
 
 /*********************  Below is all functions  *********************************/
 
-boolean isBlackLine(){
+int ultraSonicDistance(){
 
-  //Right black
-  if((0?(1==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 1)==1):(1==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 1)==0))){
-    return true;
+  if(ultrasonic_6.distanceCm() < 5){
+    Write("5 or less cm");
+    collision();
   }
-
-  //Left black  
-  else if((0?(2==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 2)==2):(2==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 2)==0))){
-    return true;
+  else if(ultrasonic_6.distanceCm() < 10){
+    Write("10 or less cm");
   }
-
-  //All black
-  else if((0?(3==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 3)==3):(3==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 3)==0))){
-    return true;
+  else if(ultrasonic_6.distanceCm() < 15){
+    Write("15 or less cm");
   }
-  
-  else{
-    return false;
+  else if(ultrasonic_6.distanceCm() < 20){
+    Write("20 or less cm");
   }
 
 }
 
 
+
+
+boolean isBlackLine(){
+  //if right is black
+  if((0?(1==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 1)==1):(1==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 1)==0))){
+  
+    return true;
+  }
+  //if left is black  
+  else if((0?(2==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 2)==2):(2==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 2)==0))){
+    return true;
+  }
+  //if both are black
+  else if((0?(3==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 3)==3):(3==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 3)==0))){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
 
 void collision(){
   moveBackward();
