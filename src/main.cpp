@@ -7,6 +7,7 @@
 #include <string.h>
 
 
+
 MeSerial meSerial(PORT5);
 
 MeEncoderOnBoard Encoder_1(SLOT1);
@@ -61,7 +62,10 @@ void move(int direction, int speed)
   Encoder_2.setTarPWM(rightSpeed);
 }
 
-
+//Bluetooth functions
+String Read();
+void Write(char ch);
+void Write(String string);
 
 
 void setup() {
@@ -72,7 +76,7 @@ void setup() {
   meSerial.begin(9600);
   //mySerial.begin(9600);
 
-  Serial.print("TESTING SETUP");
+  //Serial.print("TESTING SETUP");
 
   meSerial.sendString("Hello World");
 
@@ -103,21 +107,47 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  
-  
 
-  delay(1000);
+  //String test = "";
+  char test = ' ';
+  //test = meSerial.read();
   if (Serial.available()){
     test = Serial.read();
-    meSerial.sendString("Hello World");
-    Serial.print("master");
-    /*if(BtSerial.availableForWrite()){
-      BtSerial.print("recieved");
-    }*/
   }
-  //Encoder_1.loop();
-  //Encoder_2.loop();
+  //test = Read();
+  if (meSerial.available()){
+    test = meSerial.read();
+  }
+  
+  if (test != ' '){
+    meSerial.print(test);
+  }
+  //test = meSerial.readString();
+  //test = Read(); 
+  
+  //Serial.print(test);
+  //Write(test);
 
-
-
+}
+//Bluetooth functions
+String Read(){
+  String input = "";
+    if (Serial.available()){
+      input = Serial.readString();
+    }
+  return input;
+}
+void Write(char ch){
+  if (Serial.availableForWrite()){
+    if (ch != NULL){
+      Serial.print(ch);
+    }
+  }
+}
+void Write(String string){
+  if (Serial.availableForWrite()){
+    if ((string != "") && (string != NULL)){
+      Serial.println(string);
+    }
+  }
 }
