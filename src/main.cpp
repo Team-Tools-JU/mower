@@ -71,7 +71,6 @@ void setup() {
 void loop() {
   
 
-
   moveStop();
   leftMotor.setTarPWM(0);
   rightMotor.setTarPWM(0);
