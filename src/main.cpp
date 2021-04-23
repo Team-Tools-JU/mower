@@ -41,7 +41,7 @@ void moveBackward();
 void moveLeft();
 void moveRight();
 void moveStop();
-boolean lineSensorFeedback();
+boolean isBlackLine();
 void collision();
 
 String Read();
@@ -71,7 +71,7 @@ void setup() {
 
 
 void loop() {
-  lineSensorFeedback();
+  isBlackLine();
 
   // moveStop();
   // leftMotor.setTarPWM(0);
@@ -84,7 +84,7 @@ void loop() {
 
 /*********************  Below is all functions  *********************************/
 
-boolean lineSensorFeedback(){
+boolean isBlackLine(){
 
   //Right black
   if((0?(1==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 1)==1):(1==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 1)==0))){
