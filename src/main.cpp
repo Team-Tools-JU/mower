@@ -3,6 +3,10 @@
 #include <Wire.h>
 #include <MeSerial.h>
 #include <MeAuriga.h>
+#include <MeBluetooth.h>
+#include <string.h>
+
+
 
 
 
@@ -19,10 +23,8 @@ typedef enum {
 
 
 MeSerial meSerial(PORT5);
-
 MeEncoderOnBoard leftMotor(SLOT1);
 MeEncoderOnBoard rightMotor(SLOT2);
-
 MeLightSensor lightsensor_12(12);
 
 //MeAuriga functions, Don't use!
@@ -39,6 +41,10 @@ void moveLeft();
 void moveRight();
 void moveStop();
 
+String Read();
+void Write(char ch);
+void Write(String string);
+
 void mower_drive_state(mower_state_t state);
 
 
@@ -51,11 +57,10 @@ void setup() {
   attachInterrupt(leftMotor.getIntNum(), isr_process_leftMotor, RISING);
   attachInterrupt(rightMotor.getIntNum(), isr_process_rightMotor, RISING);
   randomSeed((unsigned long)(lightsensor_12.read() * 123456));
+  Serial.begin(115200);
+  meSerial.begin(9600);
 
 
-  // Moves forward for ONE second
-  moveForward();
-  _delay(1);
 }
 
 
@@ -113,6 +118,7 @@ void move(int direction, int speed)
   rightMotor.setTarPWM(rightSpeed);
 }
 
+
 void moveForward(){
   move(1, 50 / 100.0 * 255);
 }
@@ -125,9 +131,11 @@ void moveLeft(){
   move(3, 50 / 100.0 * 255);
 }
 
+
 void moveRight(){
   move(4, 50 / 100.0 * 255);
 }
+
 
 
 void moveStop(){
@@ -154,6 +162,28 @@ void _delay(float seconds) {
 
 
 
+//Bluetooth functions
+String Read(){
+  String input = "";
+    if (Serial.available()){
+      input = Serial.readString();
+    }
+  return input;
+}
+void Write(char ch){
+  if (Serial.availableForWrite()){
+    if (ch != NULL){
+      Serial.print(ch);
+    }
+  }
+}
+void Write(String string){
+  if (Serial.availableForWrite()){
+    if ((string != "") && (string != NULL)){
+      Serial.println(string);
+    }
+  }
+}
 
 
 void mower_drive_state(mower_state_t state){
@@ -187,4 +217,5 @@ void mower_drive_state(mower_state_t state){
   }
 
 }
+
 
