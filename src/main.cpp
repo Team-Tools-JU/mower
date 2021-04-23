@@ -26,6 +26,7 @@ MeSerial meSerial(PORT5);
 MeEncoderOnBoard leftMotor(SLOT1);
 MeEncoderOnBoard rightMotor(SLOT2);
 MeLightSensor lightsensor_12(12);
+MeLineFollower linefollower_7(7); //Line follow sensor on port 6
 
 //MeAuriga functions, Don't use!
 void isr_process_leftMotor(void);
@@ -40,6 +41,8 @@ void moveBackward();
 void moveLeft();
 void moveRight();
 void moveStop();
+boolean isBlackLine();
+void collision();
 
 String Read();
 void Write(char ch);
@@ -68,18 +71,54 @@ void setup() {
 
 
 void loop() {
+  isBlackLine();
 
-  moveStop();
-  leftMotor.setTarPWM(0);
-  rightMotor.setTarPWM(0);
+  // moveStop();
+  // leftMotor.setTarPWM(0);
+  // rightMotor.setTarPWM(0);
   _loop();
 }
 
 
-// Below is functions
+
+
+/*********************  Below is all functions  *********************************/
+
+boolean isBlackLine(){
+
+  //Right black
+  if((0?(1==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 1)==1):(1==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 1)==0))){
+    return true;
+  }
+
+  //Left black  
+  else if((0?(2==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 2)==2):(2==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 2)==0))){
+    return true;
+  }
+
+  //All black
+  else if((0?(3==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 3)==3):(3==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 3)==0))){
+    return true;
+  }
+  
+  else{
+    return false;
+  }
+
+}
+
+
+
+void collision(){
+  moveBackward();
+  _delay(0.5);
+  moveRight();
+  _delay(0.5);
+}
+
+
 
 void isr_process_leftMotor(void)
-
 {
   if(digitalRead(leftMotor.getPortB()) == 0){
     leftMotor.pulsePosMinus();
