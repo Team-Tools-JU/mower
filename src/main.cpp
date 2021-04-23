@@ -8,42 +8,99 @@
 
 
 
+
+
+// Enumeration for mower states
+typedef enum {
+  MOWER_IDLE = 0,
+  MOWER_AUTO_RUN,
+  MOWER_MAN_FORWARD,
+  MOWER_MAN_BACKWARDS,
+  MOWER_MAN_LEFT,
+  MOWER_MAN_RIGHT,
+  MOWER_FAULT = 99
+} mower_state_t;
+
+
 MeSerial meSerial(PORT5);
-
-MeEncoderOnBoard Encoder_1(SLOT1);
-MeEncoderOnBoard Encoder_2(SLOT2);
-//SoftwareSerial BtSerial(PE0, PE1);
-
-char test;
-
-
-// WHat is dis?
+MeEncoderOnBoard leftMotor(SLOT1);
+MeEncoderOnBoard rightMotor(SLOT2);
 MeLightSensor lightsensor_12(12);
 
+//MeAuriga functions, Don't use!
+void isr_process_leftMotor(void);
+void isr_process_rightMotor(void);
+void move(int direction, int speed);
+void _loop();
+void _delay(float seconds);
 
-void isr_process_encoder1(void)
+//Private functions.
+void moveForward();
+void moveBackward();
+void moveLeft();
+void moveRight();
+void moveStop();
+
+String Read();
+void Write(char ch);
+void Write(String string);
+
+void mower_drive_state(mower_state_t state);
+
+
+
+void setup() {
+  TCCR1A = _BV(WGM10);
+  TCCR1B = _BV(CS11) | _BV(WGM12);
+  TCCR2A = _BV(WGM21) | _BV(WGM20);
+  TCCR2B = _BV(CS21);
+  attachInterrupt(leftMotor.getIntNum(), isr_process_leftMotor, RISING);
+  attachInterrupt(rightMotor.getIntNum(), isr_process_rightMotor, RISING);
+  randomSeed((unsigned long)(lightsensor_12.read() * 123456));
+  Serial.begin(115200);
+  meSerial.begin(9600);
+
+
+}
+
+
+
+
+
+void loop() {
+
+  moveStop();
+  leftMotor.setTarPWM(0);
+  rightMotor.setTarPWM(0);
+  _loop();
+}
+
+
+// Below is functions
+
+void isr_process_leftMotor(void)
+
 {
-  if(digitalRead(Encoder_1.getPortB()) == 0){
-    Encoder_1.pulsePosMinus();
+  if(digitalRead(leftMotor.getPortB()) == 0){
+    leftMotor.pulsePosMinus();
   }else{
-    Encoder_1.pulsePosPlus();
+    leftMotor.pulsePosPlus();
   }
 }
-void isr_process_encoder2(void)
+
+void isr_process_rightMotor(void)
 {
-  if(digitalRead(Encoder_2.getPortB()) == 0){
-    Encoder_2.pulsePosMinus();
+  if(digitalRead(rightMotor.getPortB()) == 0){
+    rightMotor.pulsePosMinus();
   }else{
-    Encoder_2.pulsePosPlus();
+    rightMotor.pulsePosPlus();
   }
 }
-
 
 void move(int direction, int speed)
 {
   int leftSpeed = 0;
   int rightSpeed = 0;
-
   if(direction == 1){
     leftSpeed = -speed;
     rightSpeed = speed;
@@ -57,78 +114,54 @@ void move(int direction, int speed)
     leftSpeed = speed;
     rightSpeed = speed;
   }
-
-  Encoder_1.setTarPWM(leftSpeed);
-  Encoder_2.setTarPWM(rightSpeed);
+  leftMotor.setTarPWM(leftSpeed);
+  rightMotor.setTarPWM(rightSpeed);
 }
 
-//Bluetooth functions
-String Read();
-void Write(char ch);
-void Write(String string);
 
-
-void setup() {
- // BtSerial.begin(115200);
- 
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  meSerial.begin(9600);
-  //mySerial.begin(9600);
-
-  //Serial.print("TESTING SETUP");
-
-  meSerial.sendString("Hello World");
-
-
-  TCCR1A = _BV(WGM10);
-  TCCR1B = _BV(CS11) | _BV(WGM12);
-  TCCR2A = _BV(WGM21) | _BV(WGM20);
-  TCCR2B = _BV(CS21);
-  attachInterrupt(Encoder_1.getIntNum(), isr_process_encoder1, RISING);
-  attachInterrupt(Encoder_2.getIntNum(), isr_process_encoder2, RISING);
-  randomSeed((unsigned long)(lightsensor_12.read() * 123456));
-  delay(1000);
-
-  // MOVE FUNCTION ????
+void moveForward(){
   move(1, 50 / 100.0 * 255);
+}
+
+void moveBackward(){
+  move(2, 50 / 100.0 * 255);
+}
+
+void moveLeft(){
+  move(3, 50 / 100.0 * 255);
+}
 
 
-  // This makes the mBot STOP moving
-  Encoder_1.setTarPWM(0);
-  Encoder_2.setTarPWM(0);
-  delay(500);
+void moveRight(){
+  move(4, 50 / 100.0 * 255);
+}
 
-  meSerial.sendString("SETUP DONE");
+
+
+void moveStop(){
+  leftMotor.setTarPWM(0);
+  rightMotor.setTarPWM(0);
 }
 
 
 
 
-void loop() {
-  // put your main code here, to run repeatedly:
 
-  //String test = "";
-  char test = ' ';
-  //test = meSerial.read();
-  if (Serial.available()){
-    test = Serial.read();
-  }
-  //test = Read();
-  if (meSerial.available()){
-    test = meSerial.read();
-  }
-  
-  if (test != ' '){
-    meSerial.print(test);
-  }
-  //test = meSerial.readString();
-  //test = Read(); 
-  
-  //Serial.print(test);
-  //Write(test);
-
+void _loop() {
+  leftMotor.loop();
+  rightMotor.loop();
 }
+
+void _delay(float seconds) {
+  if(seconds < 0.0){
+    seconds = 0.0;
+  }
+  long endTime = millis() + seconds * 1000;
+  while(millis() < endTime) _loop();
+}
+
+
+
 //Bluetooth functions
 String Read(){
   String input = "";
@@ -151,3 +184,38 @@ void Write(String string){
     }
   }
 }
+
+
+void mower_drive_state(mower_state_t state){
+  switch(state){
+    case MOWER_IDLE:
+      //motor speed 0
+      break;
+    case MOWER_AUTO_RUN:
+      //If obsticle ->reverse and turn 
+      //else forward
+      break;
+    case MOWER_MAN_FORWARD:
+      //Move forward
+      break;
+    case MOWER_MAN_BACKWARDS:
+      //Move backwards
+      break;
+    case MOWER_MAN_LEFT:
+      //Move left
+      break;
+    case MOWER_MAN_RIGHT:
+      //Move right
+      break;
+
+    case MOWER_FAULT:
+      //error handling
+      break;
+
+    default:
+      break;
+  }
+
+}
+
+
