@@ -10,6 +10,7 @@
 
 
 
+
 // Enumeration for mower states
 typedef enum {
   MOWER_IDLE = 0,
@@ -19,13 +20,18 @@ typedef enum {
   MOWER_MAN_LEFT,
   MOWER_MAN_RIGHT,
   MOWER_FAULT = 99
-} mower_state_t;
+} mowerState_t;
 
+
+//globals
+
+mowerState_t mowerStateGlobal = MOWER_IDLE;
 
 MeSerial meSerial(PORT5);
 MeEncoderOnBoard leftMotor(SLOT1);
 MeEncoderOnBoard rightMotor(SLOT2);
 MeLightSensor lightsensor_12(12);
+
 MeLineFollower linefollower_7(7); //Line follow sensor on port 6
 
 //MeAuriga functions, Don't use!
@@ -48,7 +54,11 @@ String Read();
 void Write(char ch);
 void Write(String string);
 
-void mower_drive_state(mower_state_t state);
+void updateState(String data);
+
+
+
+void mowerDriveState(void);
 
 
 
@@ -64,6 +74,7 @@ void setup() {
   meSerial.begin(9600);
 
 
+
 }
 
 
@@ -73,9 +84,21 @@ void setup() {
 void loop() {
   isBlackLine();
 
-  // moveStop();
-  // leftMotor.setTarPWM(0);
-  // rightMotor.setTarPWM(0);
+
+  String btdata = Read();
+
+
+  String data = btdata.substring(0,2);
+  
+  
+  if (data != "" && data != nullptr){
+    //test = data;
+    updateState(data);
+  }
+  //Serial.print()
+  //Write(test);
+  
+  mowerDriveState();
   _loop();
 }
 
@@ -203,6 +226,7 @@ void _delay(float seconds) {
 
 //Bluetooth functions
 String Read(){
+  
   String input = "";
     if (Serial.available()){
       input = Serial.readString();
@@ -225,30 +249,72 @@ void Write(String string){
 }
 
 
-void mower_drive_state(mower_state_t state){
-  switch(state){
+void updateState(String data){
+  
+  //Write("Inne i updateState");
+  //Write(data);
+  //Serial.print(data);
+  if(data == "AR"){
+    mowerStateGlobal = MOWER_AUTO_RUN;
+    Write("Inne i AR");
+  }
+  else if(data=="AS"){
+    mowerStateGlobal =  MOWER_IDLE;
+    Write("Inne i AS");
+  }
+  else if(data=="MF"){
+    mowerStateGlobal = MOWER_MAN_FORWARD;
+    Write("Inne i MF");
+  }
+  else if(data=="MB"){
+    mowerStateGlobal = MOWER_MAN_BACKWARDS;
+    Write("Inne i MB");
+  }
+  else if(data=="ML"){
+    mowerStateGlobal = MOWER_MAN_LEFT;
+    Write("Inne i ML");
+
+  }
+  else if(data=="MR"){
+    mowerStateGlobal = MOWER_MAN_RIGHT;
+    Write("Inne i MR");
+  }
+  /* else{
+    mower_state_global = MOWER_FAULT;
+  } */
+
+}
+
+
+void mowerDriveState(){
+  switch(mowerStateGlobal){
     case MOWER_IDLE:
-      //motor speed 0
+      moveStop();
       break;
     case MOWER_AUTO_RUN:
-      //If obsticle ->reverse and turn 
-      //else forward
+      if(0){
+        //If obsticle ->reverse and turn 
+        //TODO
+      }else{
+        moveForward();
+      }
       break;
     case MOWER_MAN_FORWARD:
-      //Move forward
+      moveForward();
       break;
     case MOWER_MAN_BACKWARDS:
-      //Move backwards
+      moveBackward();
       break;
     case MOWER_MAN_LEFT:
-      //Move left
+      moveLeft();
       break;
     case MOWER_MAN_RIGHT:
-      //Move right
+      moveRight();
       break;
 
     case MOWER_FAULT:
       //error handling
+      
       break;
 
     default:
