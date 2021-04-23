@@ -26,6 +26,7 @@ MeSerial meSerial(PORT5);
 MeEncoderOnBoard leftMotor(SLOT1);
 MeEncoderOnBoard rightMotor(SLOT2);
 MeLightSensor lightsensor_12(12);
+MeLineFollower linefollower_6(6); //Line follow sensor on port 6
 
 //MeAuriga functions, Don't use!
 void isr_process_leftMotor(void);
@@ -68,6 +69,7 @@ void setup() {
 
 
 void loop() {
+  
 
 
   moveStop();
@@ -77,7 +79,9 @@ void loop() {
 }
 
 
-// Below is functions
+
+
+/*********************  Below is all functions  *********************************/
 
 void isr_process_leftMotor(void)
 
