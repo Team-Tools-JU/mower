@@ -10,6 +10,7 @@
 
 
 
+
 // Enumeration for mower states
 typedef enum {
   MOWER_IDLE = 0,
@@ -48,6 +49,10 @@ String Read();
 void Write(char ch);
 void Write(String string);
 
+void updateState(String data);
+
+
+
 void mower_drive_state(void);
 
 
@@ -64,6 +69,7 @@ void setup() {
   meSerial.begin(9600);
 
 
+
 }
 
 
@@ -72,11 +78,20 @@ void setup() {
 
 void loop() {
 
-  //read bt
+  String btdata = Read();
 
-  mower_drive_state();
 
+  String data = btdata.substring(0,2);
   
+  
+  if (data != "" && data != nullptr){
+    //test = data;
+    updateState(data);
+  }
+  //Serial.print()
+  //Write(test);
+  
+  mower_drive_state();
   _loop();
 }
 
@@ -169,6 +184,7 @@ void _delay(float seconds) {
 
 //Bluetooth functions
 String Read(){
+  
   String input = "";
     if (Serial.available()){
       input = Serial.readString();
@@ -191,6 +207,43 @@ void Write(String string){
 }
 
 
+void updateState(String data){
+  
+  //Write("Inne i updateState");
+  //Write(data);
+  //Serial.print(data);
+  if(data == "AR"){
+    mower_state_global = MOWER_AUTO_RUN;
+    Write("Inne i AR");
+  }
+  else if(data=="AS"){
+    mower_state_global =  MOWER_IDLE;
+    Write("Inne i AS");
+  }
+  else if(data=="MF"){
+    mower_state_global = MOWER_MAN_FORWARD;
+    Write("Inne i MF");
+  }
+  else if(data=="MB"){
+    mower_state_global = MOWER_MAN_BACKWARDS;
+    Write("Inne i MB");
+  }
+  else if(data=="ML"){
+    mower_state_global = MOWER_MAN_LEFT;
+    Write("Inne i ML");
+
+  }
+  else if(data=="MR"){
+    mower_state_global = MOWER_MAN_RIGHT;
+    Write("Inne i MR");
+  }
+  /* else{
+    mower_state_global = MOWER_FAULT;
+  } */
+
+}
+
+
 void mower_drive_state(){
   switch(mower_state_global){
     case MOWER_IDLE:
@@ -199,6 +252,7 @@ void mower_drive_state(){
     case MOWER_AUTO_RUN:
       if(0){
         //If obsticle ->reverse and turn 
+        //TODO
       }else{
         moveForward();
       }
