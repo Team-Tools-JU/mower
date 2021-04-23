@@ -23,14 +23,22 @@ typedef enum {
 } mowerState_t;
 
 
+typedef enum {
+  BLACK_NONE,
+  BLACK_LEFT,
+  BLACK_RIGHT,
+  BLACK_CENTER
+} linesensorState_t;
+
 //globals
 
 mowerState_t mowerStateGlobal = MOWER_IDLE;
+linesensorState_t linesensorStateGlobal = BLACK_NONE;
 
 MeSerial meSerial(PORT5);
 MeEncoderOnBoard leftMotor(SLOT1);
 MeEncoderOnBoard rightMotor(SLOT2);
-
+MeLightSensor lightsensor_12(12);
 MeUltrasonicSensor ultrasonic_6(6); //Ultrasonic sensor on port 6
 MeLineFollower linefollower_7(7);   //Line follow sensor on port 7
 
@@ -51,10 +59,11 @@ void moveRight();
 void moveStop();
 
 //Sensor fuctions
-boolean isBlackLine();
+void updateLinesensorState();
 void collision();
 int ultraSonicDistance();
-
+void autoRun(void);
+void updateLinesensorState(void);
 //Bluetooth functions
 String Read();
 void Write(char ch);
@@ -133,22 +142,24 @@ int ultraSonicDistance(){
 
 
 
-boolean isBlackLine(){
+void updateLinesensorState(){
   //if right is black
   if((0?(1==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 1)==1):(1==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 1)==0))){
-  
-    return true;
+    linesensorStateGlobal = BLACK_RIGHT;
+    //return true;
   }
   //if left is black  
   else if((0?(2==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 2)==2):(2==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 2)==0))){
-    return true;
+   linesensorStateGlobal = BLACK_LEFT;
+   // return true;
   }
   //if both are black
   else if((0?(3==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 3)==3):(3==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 3)==0))){
-    return true;
+    linesensorStateGlobal = BLACK_CENTER;
+    //return true;
   }
   else{
-    return false;
+    linesensorStateGlobal = BLACK_NONE;
   }
 }
 
@@ -311,24 +322,9 @@ void mowerDriveState(){
     case MOWER_IDLE:
       moveStop();
       break;
-    case MOWER_AUTO_RUN:
-      if(isBlackLine()){
-        moveBackward();
-        _delay(0.3);
-        float rf = (random( 4096 ) % 20) /10 + 0.15;
-        int dir = random(4096)%2;
-        if(dir == 1){
-          moveRight();
-        }else{
-          moveLeft();
-        }
-        _delay(rf);
 
-        //TODO
-      }else{
-        moveForward();
-      }
-      break;
+    case MOWER_AUTO_RUN:
+      autoRun();
     case MOWER_MAN_FORWARD:
       moveForward();
       break;
@@ -354,3 +350,34 @@ void mowerDriveState(){
 }
 
 
+void autoRun(void){
+  updateLinesensorState();
+  if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= BLACK_NONE){
+     moveBackward();
+    _delay(0.3);
+    float randTime = (random( 4096 ) % 20) /10 + 0.15;
+
+    if(linesensorStateGlobal == BLACK_LEFT){
+      moveRight();
+    }
+    else if(linesensorStateGlobal == BLACK_RIGHT){
+      moveLeft();
+    }
+    else{
+      float randDir = (random( 4096 ) % 2);
+      if(randDir){
+        moveLeft();
+      }else{
+        moveRight();
+      }
+      
+    }
+
+    _delay(randTime);
+  }
+  else{
+    moveForward();
+  }
+
+
+}
