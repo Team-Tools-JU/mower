@@ -296,9 +296,8 @@ void mowerDriveState(){
       if(isBlackLine()){
         moveBackward();
         _delay(0.3);
-        float rf = random(2,30) /10;
-        
-        int dir = random(1024)%2;
+        float rf = (random( 4096 ) % 20) /10;
+        int dir = random(4096)%2;
         if(dir == 1){
           moveRight();
         }else{
