@@ -78,6 +78,7 @@ void setup() {
   randomSeed((unsigned long)(lightsensor_12.read() * 123456));
   Serial.begin(115200);
   meSerial.begin(9600);
+  randomSeed(analogRead(0));
 
 
 
@@ -88,11 +89,12 @@ void setup() {
 
 
 void loop() {
+
   
   
   String btdata = Read();
   String data = btdata.substring(0,2);
-  
+
   
   if (data != "" && data != nullptr){
     //test = data;
@@ -310,8 +312,18 @@ void mowerDriveState(){
       moveStop();
       break;
     case MOWER_AUTO_RUN:
-      if(0){
-        //If obsticle ->reverse and turn 
+      if(isBlackLine()){
+        moveBackward();
+        _delay(0.3);
+        float rf = (random( 4096 ) % 20) /10 + 0.15;
+        int dir = random(4096)%2;
+        if(dir == 1){
+          moveRight();
+        }else{
+          moveLeft();
+        }
+        _delay(rf);
+
         //TODO
       }else{
         moveForward();
