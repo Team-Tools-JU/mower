@@ -10,7 +10,9 @@
 
 
 
-
+/*****************************************************************************************/
+//    Types
+/*****************************************************************************************/
 // Enumeration for mower states
 typedef enum {
   MOWER_IDLE = 0,
@@ -22,19 +24,18 @@ typedef enum {
   MOWER_FAULT = 99
 } mowerState_t;
 
-
+//enumeration for linesensor return states
 typedef enum {
-  BLACK_NONE,
-  BLACK_LEFT,
-  BLACK_RIGHT,
-  BLACK_CENTER
+  LINESENSOR_NONE,
+  LINESENSOR_LEFT,
+  LINESENSOR_RIGHT,
+  LINESENSOR_BOTH
 } linesensorState_t;
 
-//globals
+//globals vars
 
 mowerState_t mowerStateGlobal = MOWER_IDLE;
-linesensorState_t linesensorStateGlobal = BLACK_NONE;
-
+linesensorState_t linesensorStateGlobal = LINESENSOR_NONE;
 MeSerial meSerial(PORT5);
 MeEncoderOnBoard leftMotor(SLOT1);
 MeEncoderOnBoard rightMotor(SLOT2);
@@ -43,25 +44,27 @@ MeUltrasonicSensor ultrasonic_6(6); //Ultrasonic sensor on port 6
 MeLineFollower linefollower_7(7);   //Line follow sensor on port 7
 
 
-//MeAuriga functions, Don't use!
+//MeAuriga functions
 void isr_process_leftMotor(void);
 void isr_process_rightMotor(void);
 void move(int direction, int speed);
 void _loop();
 void _delay(float seconds);
 
-//----Private function list----//
-//Move functions
+/*****************************************************************************************/
+//    Private functions declarations
+/*****************************************************************************************/
+//Functions to move the robot.
 void moveForward();
 void moveBackward();
 void moveLeft();
 void moveRight();
 void moveStop();
 
-//Sensor fuctions
+//Sesnsor functions
 void updateLinesensorState();
 void collision();
-int ultraSonicDistance();
+int ultraSonicDistance(); // reads the distance
 void autoRun(void);
 void updateLinesensorState(void);
 //Bluetooth functions
@@ -75,7 +78,9 @@ void updateState(String data);
 
 void mowerDriveState(void);
 
-
+/*****************************************************************************************/
+//   Main loop and setup functions
+/*****************************************************************************************/
 
 void setup() {
   TCCR1A = _BV(WGM10);
@@ -88,20 +93,13 @@ void setup() {
   Serial.begin(115200);
   meSerial.begin(9600);
   randomSeed(analogRead(0));
-
-
-
 }
-
-
-
-
 
 void loop() {
 
   
   
-  String btdata = Read();
+  String btdata = "AR";
   String data = btdata.substring(0,2);
 
   
@@ -117,60 +115,23 @@ void loop() {
 }
 
 
+/*****************************************************************************************/
+//   Functions
+/*****************************************************************************************/
 
-
-/*********************  Below is all functions  *********************************/
-
-int ultraSonicDistance(){
-
-  if(ultrasonic_6.distanceCm() < 5){
-    Write("5 or less cm");
-    collision();
-  }
-  else if(ultrasonic_6.distanceCm() < 10){
-    Write("10 or less cm");
-  }
-  else if(ultrasonic_6.distanceCm() < 15){
-    Write("15 or less cm");
-  }
-  else if(ultrasonic_6.distanceCm() < 20){
-    Write("20 or less cm");
-  }
-
+//auriga functions
+void _loop() {
+  leftMotor.loop();
+  rightMotor.loop();
 }
 
-
-
-
-void updateLinesensorState(){
-  //if right is black
-  if((0?(1==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 1)==1):(1==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 1)==0))){
-    linesensorStateGlobal = BLACK_RIGHT;
-    //return true;
+void _delay(float seconds) {
+  if(seconds < 0.0){
+    seconds = 0.0;
   }
-  //if left is black  
-  else if((0?(2==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 2)==2):(2==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 2)==0))){
-   linesensorStateGlobal = BLACK_LEFT;
-   // return true;
-  }
-  //if both are black
-  else if((0?(3==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 3)==3):(3==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 3)==0))){
-    linesensorStateGlobal = BLACK_CENTER;
-    //return true;
-  }
-  else{
-    linesensorStateGlobal = BLACK_NONE;
-  }
+  long endTime = millis() + seconds * 1000;
+  while(millis() < endTime) _loop();
 }
-
-void collision(){
-  moveBackward();
-  _delay(0.5);
-  moveRight();
-  _delay(0.5);
-}
-
-
 
 void isr_process_leftMotor(void)
 {
@@ -189,6 +150,55 @@ void isr_process_rightMotor(void)
     rightMotor.pulsePosPlus();
   }
 }
+
+
+// Ultrasonic sesnor function, return the distance to object in cm.
+int ultraSonicDistance(){
+
+  if(ultrasonic_6.distanceCm() < 5){
+    Write("5 or less cm");
+    collision();
+  }
+  else if(ultrasonic_6.distanceCm() < 10){
+    Write("10 or less cm");
+  }
+  else if(ultrasonic_6.distanceCm() < 15){
+    Write("15 or less cm");
+  }
+  else if(ultrasonic_6.distanceCm() < 20){
+    Write("20 or less cm");
+  }
+
+}
+// function to update the global state of the lines sensor.
+void updateLinesensorState(){
+  //if right is black
+  if((0?(1==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 1)==1):(1==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 1)==0))){
+    linesensorStateGlobal = LINESENSOR_RIGHT;
+    //return true;
+  }
+  //if left is black  
+  else if((0?(2==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 2)==2):(2==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 2)==0))){
+   linesensorStateGlobal = LINESENSOR_LEFT;
+   // return true;
+  }
+  //if both are black
+  else if((0?(3==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 3)==3):(3==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 3)==0))){
+    linesensorStateGlobal = LINESENSOR_BOTH;
+    //return true;
+  }
+  else{
+    linesensorStateGlobal = LINESENSOR_NONE;
+  }
+}
+
+void collision(){
+  moveBackward();
+  _delay(0.5);
+  moveRight();
+  _delay(0.5);
+}
+
 
 void move(int direction, int speed)
 {
@@ -210,8 +220,7 @@ void move(int direction, int speed)
   leftMotor.setTarPWM(leftSpeed);
   rightMotor.setTarPWM(rightSpeed);
 }
-
-
+//Functions for moving the robot
 void moveForward(){
   move(1, 50 / 100.0 * 255);
 }
@@ -224,46 +233,24 @@ void moveLeft(){
   move(3, 50 / 100.0 * 255);
 }
 
-
 void moveRight(){
   move(4, 50 / 100.0 * 255);
 }
-
-
 
 void moveStop(){
   leftMotor.setTarPWM(0);
   rightMotor.setTarPWM(0);
 }
 
-
-
-
-
-void _loop() {
-  leftMotor.loop();
-  rightMotor.loop();
-}
-
-void _delay(float seconds) {
-  if(seconds < 0.0){
-    seconds = 0.0;
-  }
-  long endTime = millis() + seconds * 1000;
-  while(millis() < endTime) _loop();
-}
-
-
-
 //Bluetooth functions
 String Read(){
-  
   String input = "";
     if (Serial.available()){
       input = Serial.readString();
     }
   return input;
 }
+
 void Write(char ch){
   if (Serial.availableForWrite()){
     if (ch != NULL){
@@ -271,6 +258,7 @@ void Write(char ch){
     }
   }
 }
+
 void Write(String string){
   if (Serial.availableForWrite()){
     if ((string != "") && (string != NULL)){
@@ -280,6 +268,7 @@ void Write(String string){
 }
 
 
+// Function to read the BT commands and update the state machince.
 void updateState(String data){
   
   //Write("Inne i updateState");
@@ -315,8 +304,7 @@ void updateState(String data){
   } */
 
 }
-
-
+//main state machince for the mower
 void mowerDriveState(){
   switch(mowerStateGlobal){
     case MOWER_IDLE:
@@ -348,19 +336,18 @@ void mowerDriveState(){
   }
 
 }
-
-
+//logic for autonmous operations
 void autoRun(void){
   updateLinesensorState();
-  if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= BLACK_NONE){
+  if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){
      moveBackward();
     _delay(0.3);
-    float randTime = (random( 4096 ) % 20) /10 + 0.15;
+    float randTime = (random( 4096 ) % 15) /10 + 0.15;
 
-    if(linesensorStateGlobal == BLACK_LEFT){
+    if(linesensorStateGlobal == LINESENSOR_LEFT){
       moveRight();
     }
-    else if(linesensorStateGlobal == BLACK_RIGHT){
+    else if(linesensorStateGlobal == LINESENSOR_RIGHT){
       moveLeft();
     }
     else{
@@ -372,7 +359,7 @@ void autoRun(void){
       }
       
     }
-
+  
     _delay(randTime);
   }
   else{
