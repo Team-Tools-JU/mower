@@ -343,7 +343,7 @@ void autoRun(void){
     _delay(0.01);
     moveBackward();
     
-    _delay(0.3);
+    _delay(0.2);
     float randTime = (random( 4096 ) % 150)  + 15;
 
     if(linesensorStateGlobal == LINESENSOR_LEFT){
