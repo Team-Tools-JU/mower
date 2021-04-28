@@ -151,7 +151,6 @@ void isr_process_rightMotor(void)
   }
 }
 
-
 // Ultrasonic sesnor function, return the distance to object in cm.
 int ultraSonicDistance(){
 
@@ -340,9 +339,21 @@ void mowerDriveState(){
 void autoRun(void){
   updateLinesensorState();
   if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){
-     moveBackward();
+    moveBackward();
+    int i = 0;
+    
+    while(i++ < 25){
+      _delay(0.01);
+      updateLinesensorState();
+      if(linesensorStateGlobal != LINESENSOR_NONE){
+        moveStop();
+        moveForward();
+        _delay(0.1);
+        break;
+      }
+    }
     _delay(0.3);
-    float randTime = (random( 4096 ) % 15) /10 + 0.15;
+    float randTime = (random( 4096 ) % 150)  + 15;
 
     if(linesensorStateGlobal == LINESENSOR_LEFT){
       moveRight();
@@ -359,8 +370,16 @@ void autoRun(void){
       }
       
     }
-  
-    _delay(randTime);
+
+    i = 0;
+    while(i++ < randTime){
+      _delay(0.01);
+      updateLinesensorState();
+      if(linesensorStateGlobal != LINESENSOR_NONE){
+        moveStop();
+        break;
+      }
+    }
   }
   else{
     moveForward();
