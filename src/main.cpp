@@ -339,19 +339,10 @@ void mowerDriveState(){
 void autoRun(void){
   updateLinesensorState();
   if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){
+    moveStop();
+    _delay(0.01);
     moveBackward();
-    int i = 0;
     
-    while(i++ < 25){
-      _delay(0.01);
-      updateLinesensorState();
-      if(linesensorStateGlobal != LINESENSOR_NONE){
-        moveStop();
-        moveForward();
-        _delay(0.1);
-        break;
-      }
-    }
     _delay(0.3);
     float randTime = (random( 4096 ) % 150)  + 15;
 
@@ -371,7 +362,7 @@ void autoRun(void){
       
     }
 
-    i = 0;
+    int i = 0;
     while(i++ < randTime){
       _delay(0.01);
       updateLinesensorState();
