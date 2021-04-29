@@ -42,6 +42,12 @@ MeEncoderOnBoard rightMotor(SLOT2);
 MeLightSensor lightsensor_12(12);
 MeUltrasonicSensor ultrasonic_6(6); //Ultrasonic sensor on port 6
 MeLineFollower linefollower_7(7);   //Line follow sensor on port 7
+MeGyro gyro_0(0, 0x69);
+
+// Gyro variables
+float posX = 0;
+float posY = 0;
+float posZ = 0;
 
 
 //MeAuriga functions
@@ -67,6 +73,9 @@ void collision();
 int ultraSonicDistance(); // reads the distance
 void autoRun(void);
 void updateLinesensorState(void);
+void printMotorCurPosToBT();
+void printPosZViaWiFi();
+
 //Bluetooth functions
 String Read();
 void Write(char ch);
@@ -92,14 +101,20 @@ void setup() {
   randomSeed((unsigned long)(lightsensor_12.read() * 123456));
   Serial.begin(115200);
   meSerial.begin(9600);
+  gyro_0.begin();
   randomSeed(analogRead(0));
+
+  posX = gyro_0.getAngle(1);
+  posY = gyro_0.getAngle(2);
+  posZ = gyro_0.getAngle(3);
 }
 
-void loop() {
 
+
+void loop() {
+ 
   
-  
-  String btdata = "AR";
+  String btdata = Read();
   String data = btdata.substring(0,2);
 
   
@@ -107,7 +122,12 @@ void loop() {
     //test = data;
     updateState(data);
   }
-  //Serial.print()
+
+
+  //meSerial.print("X: " + String(posX));
+  //meSerial.print("  Y: " + String(posY));
+  
+  //Serial.print();
   //Write(test);
   
   mowerDriveState();
@@ -119,10 +139,27 @@ void loop() {
 //   Functions
 /*****************************************************************************************/
 
+
+//position functions
+void printMotorCurPosToBT(){
+  Write("LeftMotor:" + String(leftMotor.getCurPos()));
+  Write("RightMotor:" + String(rightMotor.getCurPos()));
+}
+
+void printPosZViaWiFi(){
+  meSerial.println("  Z: " + String(posZ));
+}
+
 //auriga functions
 void _loop() {
   leftMotor.loop();
   rightMotor.loop();
+
+//Gyro Values Update
+  posX = gyro_0.getAngle(1);
+  posY = gyro_0.getAngle(2);
+  posZ = gyro_0.getAngle(3);
+  gyro_0.update();
 }
 
 void _delay(float seconds) {
