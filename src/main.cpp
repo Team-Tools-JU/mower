@@ -71,8 +71,7 @@ void collision();
 int ultraSonicDistance(); // reads the distance
 void autoRun(void);
 void updateLinesensorState(void);
-void printMotorCurPosToWiFi();
-void printPosZToWiFi();
+void sendPosVectorToPi();
 
 //Bluetooth functions
 String Read();
@@ -130,13 +129,9 @@ void loop() {
 
 
 //position functions
-void printMotorCurPosToWiFi(){
+void sendPosVectorToPi(){
   long distance = (((rightMotor.getCurPos()*124.4)/360));
-  meSerial.println("Motor: " + String(distance));
-}
-
-void printPosZToWiFi(){
-  meSerial.println("Z: " + String(posZ));
+  meSerial.println(String(posZ) + " " + String(distance));
 }
 
 //Auriga functions
@@ -364,8 +359,7 @@ void autoRun(void){
     _delay(0.01);
 
     // Print values for collsion and reset
-    printPosZToWiFi();
-    printMotorCurPosToWiFi();
+    sendPosVectorToPi();
     rightMotor.setPulsePos(0);
 
     // Go back and update values
@@ -376,8 +370,7 @@ void autoRun(void){
     rightMotor.updateCurPos();
 
     // Print values after backing
-    printPosZToWiFi();
-    printMotorCurPosToWiFi();
+    sendPosVectorToPi();
 
     float randTime = (random( 4096 ) % 150)  + 15;
 
