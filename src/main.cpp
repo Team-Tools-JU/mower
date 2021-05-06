@@ -142,8 +142,8 @@ void printMotorCurPosToBT(){
   // Write("LeftMotor:" + String(leftMotor.getCurPos()));
   // Write("RightMotor:" + String(rightMotor.getCurPos()));
 
-  long distance = (((rightMotor.getCurPos())/360)*124.4);
-  // long distance = (rightMotor.getCurPos());
+  long distance = (((rightMotor.getCurPos()*124.4)/360));
+  //long distance = (rightMotor.getCurPos());
 
   meSerial.println("Motor:" + String(distance));
 
@@ -385,14 +385,22 @@ void autoRun(void){
   if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal == LINESENSOR_RIGHT){
     moveStop();
     _delay(0.01);
-
     printPosZViaWiFi();
     printMotorCurPosToBT();
+    rightMotor.setPulsePos(0);
+    
+    
+
+    
     
     moveBackward();
     _delay(0.6);
-
     moveStop();
+    rightMotor.loop();
+    rightMotor.updateCurPos();
+    printPosZViaWiFi();
+    printMotorCurPosToBT();
+
 
     float randTime = (random( 4096 ) % 150)  + 15;
 
@@ -415,10 +423,8 @@ void autoRun(void){
       float randDir = (random( 4096 ) % 2);
       if(randDir){
         moveLeft();
-        rightMotor.setPulsePos(0);
       }else{
         moveRight();
-        rightMotor.setPulsePos(0);
       }
 
     int i = 0;
@@ -431,6 +437,7 @@ void autoRun(void){
         break;
       }
     }
+    //rightMotor.setPulsePos(0);
   }
   else{
     moveForward();
