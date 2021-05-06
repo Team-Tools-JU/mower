@@ -45,8 +45,6 @@ MeLineFollower linefollower_7(7);   //Line follow sensor on port 7
 MeGyro gyro_0(0, 0x69);
 
 // Gyro variables
-float posX = 0;
-float posY = 0;
 float posZ = 0;
 
 
@@ -73,8 +71,8 @@ void collision();
 int ultraSonicDistance(); // reads the distance
 void autoRun(void);
 void updateLinesensorState(void);
-void printMotorCurPosToBT();
-void printPosZViaWiFi();
+void printMotorCurPosToWiFi();
+void printPosZToWiFi();
 
 //Bluetooth functions
 String Read();
@@ -83,9 +81,9 @@ void Write(String string);
 
 void updateState(String data);
 
-
-
 void mowerDriveState(void);
+
+
 
 /*****************************************************************************************/
 //   Main loop and setup functions
@@ -104,8 +102,6 @@ void setup() {
   gyro_0.begin();
   randomSeed(analogRead(0));
 
-  posX = gyro_0.getAngle(1);
-  posY = gyro_0.getAngle(2);
   posZ = gyro_0.getAngle(3);
 }
 
@@ -113,7 +109,6 @@ void setup() {
 
 void loop() {
  
-  
   String btdata = Read();
   String data = btdata.substring(0,2);
 
@@ -122,8 +117,6 @@ void loop() {
     //test = data;
     updateState(data);
   }
-
-  // printPosZViaWiFi();
 
   
   mowerDriveState();
@@ -137,33 +130,20 @@ void loop() {
 
 
 //position functions
-void printMotorCurPosToBT(){
-// void printMotorCurPosToWiFi(){
-  // Write("LeftMotor:" + String(leftMotor.getCurPos()));
-  // Write("RightMotor:" + String(rightMotor.getCurPos()));
-
+void printMotorCurPosToWiFi(){
   long distance = (((rightMotor.getCurPos()*124.4)/360));
-  //long distance = (rightMotor.getCurPos());
-
-  meSerial.println("Motor:" + String(distance));
-
-  // rightMotor.setPulsePos(0);
-  // Write("Motor:" + String( (rightMotor.getCurPos()) ));
+  meSerial.println("Motor: " + String(distance));
 }
 
-void printPosZViaWiFi(){
-  meSerial.println("  Z: " + String(posZ));
-  
+void printPosZToWiFi(){
+  meSerial.println("Z: " + String(posZ));
 }
 
-//auriga functions
+//Auriga functions
 void _loop() {
   leftMotor.loop();
   rightMotor.loop();
 
-//Gyro Values Update
-  //posX = gyro_0.getAngle(1);
-  //posY = gyro_0.getAngle(2);
   posZ = gyro_0.getAngle(3);
   gyro_0.update();
 }
@@ -217,17 +197,14 @@ void updateLinesensorState(){
   //if right is black
   if((0?(1==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 1)==1):(1==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 1)==0))){
     linesensorStateGlobal = LINESENSOR_RIGHT;
-    //return true;
   }
   //if left is black  
   else if((0?(2==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 2)==2):(2==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 2)==0))){
    linesensorStateGlobal = LINESENSOR_LEFT;
-   // return true;
   }
   //if both are black
   else if((0?(3==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 3)==3):(3==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 3)==0))){
     linesensorStateGlobal = LINESENSOR_BOTH;
-    //return true;
   }
   else{
     linesensorStateGlobal = LINESENSOR_NONE;
@@ -262,6 +239,7 @@ void move(int direction, int speed)
   leftMotor.setTarPWM(leftSpeed);
   rightMotor.setTarPWM(rightSpeed);
 }
+
 //Functions for moving the robot
 void moveForward(){
   move(1, 40 / 100.0 * 255);
@@ -313,9 +291,6 @@ void Write(String string){
 // Function to read the BT commands and update the state machince.
 void updateState(String data){
   
-  //Write("Inne i updateState");
-  //Write(data);
-  //Serial.print(data);
   if(data == "AR"){
     mowerStateGlobal = MOWER_AUTO_RUN;
     Write("Inne i AR");
@@ -378,46 +353,49 @@ void mowerDriveState(){
   }
 
 }
+
+
 //logic for autonmous operations
 void autoRun(void){
   updateLinesensorState();
-  // if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){
+  // if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){   //For "Old version" right below
   if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal == LINESENSOR_RIGHT){
     moveStop();
     _delay(0.01);
-    printPosZViaWiFi();
-    printMotorCurPosToBT();
-    rightMotor.setPulsePos(0);
-    
-    
 
-    
-    
+    // Print values for collsion and reset
+    printPosZToWiFi();
+    printMotorCurPosToWiFi();
+    rightMotor.setPulsePos(0);
+
+    // Go back and update values
     moveBackward();
     _delay(0.6);
     moveStop();
     rightMotor.loop();
     rightMotor.updateCurPos();
-    printPosZViaWiFi();
-    printMotorCurPosToBT();
 
+    // Print values after backing
+    printPosZToWiFi();
+    printMotorCurPosToWiFi();
 
     float randTime = (random( 4096 ) % 150)  + 15;
 
-    // Old version
+
+    // ---- Old version, take back if we get new line-sensor ----- //
     // if(linesensorStateGlobal == LINESENSOR_LEFT){
-    //   moveRight();
-    // }
-    // else if(linesensorStateGlobal == LINESENSOR_RIGHT){
-    //   moveLeft();
-    // }
-    // else{
-    //   float randDir = (random( 4096 ) % 2);
-    //   if(randDir){
-    //     moveLeft();
-    //   }else{
-    //     moveRight();
-    //   }
+      //   moveRight();
+      // }
+      // else if(linesensorStateGlobal == LINESENSOR_RIGHT){
+      //   moveLeft();
+      // }
+      // else{
+      //   float randDir = (random( 4096 ) % 2);
+      //   if(randDir){
+      //     moveLeft();
+      //   }else{
+      //     moveRight();
+      //   }
     // }
 
       float randDir = (random( 4096 ) % 2);
@@ -431,13 +409,13 @@ void autoRun(void){
     while(i++ < randTime){
       _delay(0.01);
       updateLinesensorState();
-      // if(linesensorStateGlobal != LINESENSOR_NONE){
+      // if(linesensorStateGlobal != LINESENSOR_NONE){    //For "Old version" right above
       if(linesensorStateGlobal == LINESENSOR_RIGHT){
         moveStop();
         break;
       }
     }
-    //rightMotor.setPulsePos(0);
+
   }
   else{
     moveForward();
