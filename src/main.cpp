@@ -123,12 +123,8 @@ void loop() {
     updateState(data);
   }
 
+  // printPosZViaWiFi();
 
-  //meSerial.print("X: " + String(posX));
-  //meSerial.print("  Y: " + String(posY));
-  
-  //Serial.print();
-  //Write(test);
   
   mowerDriveState();
   _loop();
@@ -142,12 +138,22 @@ void loop() {
 
 //position functions
 void printMotorCurPosToBT(){
-  Write("LeftMotor:" + String(leftMotor.getCurPos()));
-  Write("RightMotor:" + String(rightMotor.getCurPos()));
+// void printMotorCurPosToWiFi(){
+  // Write("LeftMotor:" + String(leftMotor.getCurPos()));
+  // Write("RightMotor:" + String(rightMotor.getCurPos()));
+
+  long distance = (((rightMotor.getCurPos())/360)*124.4);
+  // long distance = (rightMotor.getCurPos());
+
+  meSerial.println("Motor:" + String(distance));
+
+  // rightMotor.setPulsePos(0);
+  // Write("Motor:" + String( (rightMotor.getCurPos()) ));
 }
 
 void printPosZViaWiFi(){
   meSerial.println("  Z: " + String(posZ));
+  
 }
 
 //auriga functions
@@ -156,8 +162,8 @@ void _loop() {
   rightMotor.loop();
 
 //Gyro Values Update
-  posX = gyro_0.getAngle(1);
-  posY = gyro_0.getAngle(2);
+  //posX = gyro_0.getAngle(1);
+  //posY = gyro_0.getAngle(2);
   posZ = gyro_0.getAngle(3);
   gyro_0.update();
 }
@@ -258,7 +264,7 @@ void move(int direction, int speed)
 }
 //Functions for moving the robot
 void moveForward(){
-  move(1, 50 / 100.0 * 255);
+  move(1, 40 / 100.0 * 255);
 }
 
 void moveBackward(){
@@ -266,11 +272,11 @@ void moveBackward(){
 }
 
 void moveLeft(){
-  move(3, 50 / 100.0 * 255);
+  move(3, 40 / 100.0 * 255);
 }
 
 void moveRight(){
-  move(4, 50 / 100.0 * 255);
+  move(4, 40 / 100.0 * 255);
 }
 
 void moveStop(){
@@ -375,35 +381,52 @@ void mowerDriveState(){
 //logic for autonmous operations
 void autoRun(void){
   updateLinesensorState();
-  if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){
+  // if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){
+  if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal == LINESENSOR_RIGHT){
     moveStop();
     _delay(0.01);
-    moveBackward();
+
+    printPosZViaWiFi();
+    printMotorCurPosToBT();
     
-    _delay(0.2);
+    moveBackward();
+    _delay(0.6);
+
+    moveStop();
+
     float randTime = (random( 4096 ) % 150)  + 15;
 
-    if(linesensorStateGlobal == LINESENSOR_LEFT){
-      moveRight();
-    }
-    else if(linesensorStateGlobal == LINESENSOR_RIGHT){
-      moveLeft();
-    }
-    else{
+    // Old version
+    // if(linesensorStateGlobal == LINESENSOR_LEFT){
+    //   moveRight();
+    // }
+    // else if(linesensorStateGlobal == LINESENSOR_RIGHT){
+    //   moveLeft();
+    // }
+    // else{
+    //   float randDir = (random( 4096 ) % 2);
+    //   if(randDir){
+    //     moveLeft();
+    //   }else{
+    //     moveRight();
+    //   }
+    // }
+
       float randDir = (random( 4096 ) % 2);
       if(randDir){
         moveLeft();
+        rightMotor.setPulsePos(0);
       }else{
         moveRight();
+        rightMotor.setPulsePos(0);
       }
-      
-    }
 
     int i = 0;
     while(i++ < randTime){
       _delay(0.01);
       updateLinesensorState();
-      if(linesensorStateGlobal != LINESENSOR_NONE){
+      // if(linesensorStateGlobal != LINESENSOR_NONE){
+      if(linesensorStateGlobal == LINESENSOR_RIGHT){
         moveStop();
         break;
       }
@@ -412,6 +435,5 @@ void autoRun(void){
   else{
     moveForward();
   }
-
 
 }
