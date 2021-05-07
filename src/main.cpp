@@ -6,10 +6,6 @@
 #include <MeBluetooth.h>
 #include <string.h>
 
-
-
-
-
 /*****************************************************************************************/
 //    Types
 /*****************************************************************************************/
@@ -33,7 +29,6 @@ typedef enum {
 } linesensorState_t;
 
 //globals vars
-
 mowerState_t mowerStateGlobal = MOWER_IDLE;
 linesensorState_t linesensorStateGlobal = LINESENSOR_NONE;
 MeSerial meSerial(PORT5);
@@ -42,7 +37,10 @@ MeEncoderOnBoard rightMotor(SLOT2);
 MeLightSensor lightsensor_12(12);
 MeUltrasonicSensor ultrasonic_6(6); //Ultrasonic sensor on port 6
 MeLineFollower linefollower_7(7);   //Line follow sensor on port 7
+MeGyro gyro_0(0, 0x69);
 
+// Gyro variables
+float posZ = 0;
 
 //MeAuriga functions
 void isr_process_leftMotor(void);
@@ -67,14 +65,13 @@ void collision();
 int ultraSonicDistance(); // reads the distance
 void autoRun(void);
 void updateLinesensorState(void);
+void sendPosVectorToPi();
+
 //Bluetooth functions
 String Read();
 void Write(char ch);
 void Write(String string);
-
 void updateState(String data);
-
-
 
 void mowerDriveState(void);
 
@@ -92,14 +89,15 @@ void setup() {
   randomSeed((unsigned long)(lightsensor_12.read() * 123456));
   Serial.begin(115200);
   meSerial.begin(9600);
+  gyro_0.begin();
   randomSeed(analogRead(0));
+
+  posZ = gyro_0.getAngle(3);
 }
 
 void loop() {
-
-  
-  
-  String btdata = "AR";
+ 
+  String btdata = Read();
   String data = btdata.substring(0,2);
 
   
@@ -107,8 +105,7 @@ void loop() {
     //test = data;
     updateState(data);
   }
-  //Serial.print()
-  //Write(test);
+
   
   mowerDriveState();
   _loop();
@@ -119,10 +116,24 @@ void loop() {
 //   Functions
 /*****************************************************************************************/
 
-//auriga functions
+
+//position functions
+void sendPosVectorToPi(){
+  long distance = ((rightMotor.getCurPos()*124.4)/360);
+  meSerial.println(String(posZ) + " " + String(distance));
+}
+
+// long getPos(){
+//   return ((rightMotor.getCurPos()*124.4)/360);
+// }
+
+//Auriga functions
 void _loop() {
   leftMotor.loop();
   rightMotor.loop();
+
+  posZ = gyro_0.getAngle(3);
+  gyro_0.update();
 }
 
 void _delay(float seconds) {
@@ -174,17 +185,14 @@ void updateLinesensorState(){
   //if right is black
   if((0?(1==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 1)==1):(1==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 1)==0))){
     linesensorStateGlobal = LINESENSOR_RIGHT;
-    //return true;
   }
   //if left is black  
   else if((0?(2==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 2)==2):(2==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 2)==0))){
    linesensorStateGlobal = LINESENSOR_LEFT;
-   // return true;
   }
   //if both are black
   else if((0?(3==0?linefollower_7.readSensors()==0:(linefollower_7.readSensors() & 3)==3):(3==0?linefollower_7.readSensors()==3:(linefollower_7.readSensors() & 3)==0))){
     linesensorStateGlobal = LINESENSOR_BOTH;
-    //return true;
   }
   else{
     linesensorStateGlobal = LINESENSOR_NONE;
@@ -197,7 +205,6 @@ void collision(){
   moveRight();
   _delay(0.5);
 }
-
 
 void move(int direction, int speed)
 {
@@ -219,9 +226,10 @@ void move(int direction, int speed)
   leftMotor.setTarPWM(leftSpeed);
   rightMotor.setTarPWM(rightSpeed);
 }
+
 //Functions for moving the robot
 void moveForward(){
-  move(1, 50 / 100.0 * 255);
+  move(1, 40 / 100.0 * 255);
 }
 
 void moveBackward(){
@@ -229,11 +237,11 @@ void moveBackward(){
 }
 
 void moveLeft(){
-  move(3, 50 / 100.0 * 255);
+  move(3, 40 / 100.0 * 255);
 }
 
 void moveRight(){
-  move(4, 50 / 100.0 * 255);
+  move(4, 40 / 100.0 * 255);
 }
 
 void moveStop(){
@@ -270,9 +278,6 @@ void Write(String string){
 // Function to read the BT commands and update the state machince.
 void updateState(String data){
   
-  //Write("Inne i updateState");
-  //Write(data);
-  //Serial.print(data);
   if(data == "AR"){
     mowerStateGlobal = MOWER_AUTO_RUN;
     Write("Inne i AR");
@@ -335,46 +340,76 @@ void mowerDriveState(){
   }
 
 }
+
+
 //logic for autonmous operations
 void autoRun(void){
   updateLinesensorState();
-  if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){
+  // if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){   //For "Old version" right below
+  if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal == LINESENSOR_RIGHT){
+    
+ 
+    // Print values for collsion and reset
     moveStop();
     _delay(0.01);
+    sendPosVectorToPi();
+    rightMotor.setPulsePos(0);
+
+   if(ultrasonic_6.distanceCm() <= 5){
+      meSerial.println("COLLISION");
+    }
+    // Go back and update values
     moveBackward();
-    
-    _delay(0.2);
+    _delay(0.6);
+    rightMotor.loop();
+    rightMotor.updateCurPos();
+
+    // Print values after backing
+    moveStop();
+    _delay(0.01);
+    sendPosVectorToPi();
+    rightMotor.setPulsePos(0);
+
     float randTime = (random( 4096 ) % 150)  + 15;
 
-    if(linesensorStateGlobal == LINESENSOR_LEFT){
-      moveRight();
-    }
-    else if(linesensorStateGlobal == LINESENSOR_RIGHT){
-      moveLeft();
-    }
-    else{
+
+    // ---- Old version, take back if we get new line-sensor ----- //
+    // if(linesensorStateGlobal == LINESENSOR_LEFT){
+      //   moveRight();
+      // }
+      // else if(linesensorStateGlobal == LINESENSOR_RIGHT){
+      //   moveLeft();
+      // }
+      // else{
+      //   float randDir = (random( 4096 ) % 2);
+      //   if(randDir){
+      //     moveLeft();
+      //   }else{
+      //     moveRight();
+      //   }
+    // }
+
       float randDir = (random( 4096 ) % 2);
       if(randDir){
         moveLeft();
       }else{
         moveRight();
       }
-      
-    }
 
     int i = 0;
     while(i++ < randTime){
       _delay(0.01);
       updateLinesensorState();
-      if(linesensorStateGlobal != LINESENSOR_NONE){
+      // if(linesensorStateGlobal != LINESENSOR_NONE){    //For "Old version" right above
+      if(linesensorStateGlobal == LINESENSOR_RIGHT){
         moveStop();
         break;
       }
     }
+
   }
   else{
     moveForward();
   }
-
 
 }
