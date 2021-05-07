@@ -6,10 +6,6 @@
 #include <MeBluetooth.h>
 #include <string.h>
 
-
-
-
-
 /*****************************************************************************************/
 //    Types
 /*****************************************************************************************/
@@ -33,7 +29,6 @@ typedef enum {
 } linesensorState_t;
 
 //globals vars
-
 mowerState_t mowerStateGlobal = MOWER_IDLE;
 linesensorState_t linesensorStateGlobal = LINESENSOR_NONE;
 MeSerial meSerial(PORT5);
@@ -46,7 +41,6 @@ MeGyro gyro_0(0, 0x69);
 
 // Gyro variables
 float posZ = 0;
-
 
 //MeAuriga functions
 void isr_process_leftMotor(void);
@@ -77,12 +71,9 @@ void sendPosVectorToPi();
 String Read();
 void Write(char ch);
 void Write(String string);
-
 void updateState(String data);
 
 void mowerDriveState(void);
-
-
 
 /*****************************************************************************************/
 //   Main loop and setup functions
@@ -103,8 +94,6 @@ void setup() {
 
   posZ = gyro_0.getAngle(3);
 }
-
-
 
 void loop() {
  
@@ -130,9 +119,13 @@ void loop() {
 
 //position functions
 void sendPosVectorToPi(){
-  long distance = (((rightMotor.getCurPos()*124.4)/360));
+  long distance = ((rightMotor.getCurPos()*124.4)/360);
   meSerial.println(String(posZ) + " " + String(distance));
 }
+
+// long getPos(){
+//   return ((rightMotor.getCurPos()*124.4)/360);
+// }
 
 //Auriga functions
 void _loop() {
@@ -212,7 +205,6 @@ void collision(){
   moveRight();
   _delay(0.5);
 }
-
 
 void move(int direction, int speed)
 {
@@ -355,22 +347,28 @@ void autoRun(void){
   updateLinesensorState();
   // if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal!= LINESENSOR_NONE){   //For "Old version" right below
   if(ultrasonic_6.distanceCm() <= 5 || linesensorStateGlobal == LINESENSOR_RIGHT){
+    
+ 
+    // Print values for collsion and reset
     moveStop();
     _delay(0.01);
-
-    // Print values for collsion and reset
     sendPosVectorToPi();
     rightMotor.setPulsePos(0);
 
+   if(ultrasonic_6.distanceCm() <= 5){
+      meSerial.println("COLLISION");
+    }
     // Go back and update values
     moveBackward();
     _delay(0.6);
-    moveStop();
     rightMotor.loop();
     rightMotor.updateCurPos();
 
     // Print values after backing
+    moveStop();
+    _delay(0.01);
     sendPosVectorToPi();
+    rightMotor.setPulsePos(0);
 
     float randTime = (random( 4096 ) % 150)  + 15;
 
