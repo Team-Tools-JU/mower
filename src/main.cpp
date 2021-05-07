@@ -68,6 +68,7 @@ int ultraSonicDistance(); // reads the distance
 void autoRun(void);
 void updateLinesensorState(void);
 void sendPosVectorToPi();
+void sendPosVectorToPiCollision();
 
 //Bluetooth functions
 String Read();
@@ -113,7 +114,6 @@ void setup() {
 void loop() {
  
   listenForBtCommand();
-
   mowerDriveState();
   _loop();
 }
@@ -200,7 +200,12 @@ void ledOff(){
 //position functions
 void sendPosVectorToPi(){
   long distance = ((rightMotor.getCurPos()*124.4)/360);
-  meSerial.println(String(posZ) + " " + String(distance));
+  meSerial.println(String(posZ) + " " + String(distance) + " " + "0");
+}
+
+void sendPosVectorToPiCollision(){
+  long distance = ((rightMotor.getCurPos()*124.4)/360);
+  meSerial.println(String(posZ) + " " + String(distance) + " " + "1");
 }
 
 // long getPos(){
@@ -354,7 +359,6 @@ void Write(String string){
   }
 }
 
-
 // Function to read the BT commands and update the state machince.
 void updateState(String data){
   
@@ -395,11 +399,12 @@ void updateState(String data){
     music();
     Write("MUSIC!");
   }
-  /* else{
-    mower_state_global = MOWER_FAULT;
-  } */
+  else{
+    mowerStateGlobal = MOWER_FAULT;
+  } 
 
 }
+
 //main state machince for the mower
 void mowerDriveState(){
   switch(mowerStateGlobal){
@@ -425,6 +430,7 @@ void mowerDriveState(){
 
     case MOWER_FAULT:
       //error handling
+      moveStop();
       ledRed();
       break;
 
@@ -433,7 +439,6 @@ void mowerDriveState(){
   }
 
 }
-
 
 //logic for autonmous operations
 void autoRun(void){
@@ -445,18 +450,19 @@ void autoRun(void){
     // Print values for collsion and reset
     moveStop();
     _delay(0.01);
-    sendPosVectorToPi();
+    
+    if(ultrasonic_6.distanceCm() <= 5){
+      ledRed();
+      sendPosVectorToPiCollision();
+    }
+    else{
+      sendPosVectorToPi();
+    }
     rightMotor.setPulsePos(0);
 
-   if(ultrasonic_6.distanceCm() <= 5){
-      ledRed();
-      meSerial.println("COLLISION");
-    }
 
     // Go back and update values
     moveBackward();
-
-    
     _delay(0.6);
     rightMotor.loop();
     rightMotor.updateCurPos();
