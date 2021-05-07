@@ -38,6 +38,8 @@ MeLightSensor lightsensor_12(12);
 MeUltrasonicSensor ultrasonic_6(6); //Ultrasonic sensor on port 6
 MeLineFollower linefollower_7(7);   //Line follow sensor on port 7
 MeGyro gyro_0(0, 0x69);
+MeRGBLed rgbled_0(0, 12);
+MeBuzzer buzzer;
 
 // Gyro variables
 float posZ = 0;
@@ -66,6 +68,7 @@ int ultraSonicDistance(); // reads the distance
 void autoRun(void);
 void updateLinesensorState(void);
 void sendPosVectorToPi();
+void sendPosVectorToPiCollision();
 
 //Bluetooth functions
 String Read();
@@ -74,6 +77,16 @@ void Write(String string);
 void updateState(String data);
 
 void mowerDriveState(void);
+
+// LED functions
+void ledRed();
+void ledGreen();
+void ledBlue();
+void ledOff();
+
+void music();
+
+void listenForBtCommand();
 
 /*****************************************************************************************/
 //   Main loop and setup functions
@@ -86,6 +99,9 @@ void setup() {
   TCCR2B = _BV(CS21);
   attachInterrupt(leftMotor.getIntNum(), isr_process_leftMotor, RISING);
   attachInterrupt(rightMotor.getIntNum(), isr_process_rightMotor, RISING);
+  buzzer.setpin(45);
+  rgbled_0.setpin(44);
+  rgbled_0.fillPixelsBak(0, 2, 1);
   randomSeed((unsigned long)(lightsensor_12.read() * 123456));
   Serial.begin(115200);
   meSerial.begin(9600);
@@ -97,16 +113,7 @@ void setup() {
 
 void loop() {
  
-  String btdata = Read();
-  String data = btdata.substring(0,2);
-
-  
-  if (data != "" && data != nullptr){
-    //test = data;
-    updateState(data);
-  }
-
-  
+  listenForBtCommand();
   mowerDriveState();
   _loop();
 }
@@ -116,11 +123,89 @@ void loop() {
 //   Functions
 /*****************************************************************************************/
 
+void listenForBtCommand(){
+  String btdata = Read();
+  String data = btdata.substring(0,2);
+
+    if (data != "" && data != nullptr){
+    //test = data;
+    updateState(data);
+  }
+}
+
+void music(){
+  buzzer.tone(262, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(262, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(392, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(392, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(440, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(440, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(392, 1 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(349, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(349, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(330, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(330, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(294, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(294, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(262, 1 * 1000);
+  _delay(0.02);
+}
+
+void ledRed(){
+  rgbled_0.setColor(0,20,0,0);
+  rgbled_0.show();
+}
+
+void ledGreen(){
+  rgbled_0.setColor(0,5,10,0);
+  rgbled_0.show();
+}
+
+void ledBlue(){
+  rgbled_0.setColor(0,0,0,10);
+  rgbled_0.show();
+}
+
+void ledOff(){
+  rgbled_0.setColor(0,0,0,0);
+  rgbled_0.show();
+}
 
 //position functions
 void sendPosVectorToPi(){
   long distance = ((rightMotor.getCurPos()*124.4)/360);
-  meSerial.println(String(posZ) + " " + String(distance));
+  meSerial.println(String(posZ) + " " + String(distance) + " " + "0");
+}
+
+void sendPosVectorToPiCollision(){
+  long distance = ((rightMotor.getCurPos()*124.4)/360);
+  meSerial.println(String(posZ) + " " + String(distance) + " " + "1");
 }
 
 // long getPos(){
@@ -274,40 +359,52 @@ void Write(String string){
   }
 }
 
-
 // Function to read the BT commands and update the state machince.
 void updateState(String data){
   
   if(data == "AR"){
+    ledGreen();
     mowerStateGlobal = MOWER_AUTO_RUN;
     Write("Inne i AR");
   }
   else if(data=="AS"){
+    ledOff();
     mowerStateGlobal =  MOWER_IDLE;
     Write("Inne i AS");
   }
   else if(data=="MF"){
+    ledBlue();
     mowerStateGlobal = MOWER_MAN_FORWARD;
     Write("Inne i MF");
   }
   else if(data=="MB"){
+    ledBlue();
     mowerStateGlobal = MOWER_MAN_BACKWARDS;
     Write("Inne i MB");
   }
   else if(data=="ML"){
+    ledBlue();
     mowerStateGlobal = MOWER_MAN_LEFT;
     Write("Inne i ML");
 
   }
   else if(data=="MR"){
+    ledBlue();
     mowerStateGlobal = MOWER_MAN_RIGHT;
     Write("Inne i MR");
   }
-  /* else{
-    mower_state_global = MOWER_FAULT;
-  } */
+  else if(data=="XX"){
+    mowerStateGlobal =  MOWER_IDLE;
+    moveStop();
+    music();
+    Write("MUSIC!");
+  }
+  else{
+    mowerStateGlobal = MOWER_FAULT;
+  } 
 
 }
+
 //main state machince for the mower
 void mowerDriveState(){
   switch(mowerStateGlobal){
@@ -317,6 +414,7 @@ void mowerDriveState(){
 
     case MOWER_AUTO_RUN:
       autoRun();
+
     case MOWER_MAN_FORWARD:
       moveForward();
       break;
@@ -332,7 +430,8 @@ void mowerDriveState(){
 
     case MOWER_FAULT:
       //error handling
-      
+      moveStop();
+      ledRed();
       break;
 
     default:
@@ -340,7 +439,6 @@ void mowerDriveState(){
   }
 
 }
-
 
 //logic for autonmous operations
 void autoRun(void){
@@ -352,12 +450,17 @@ void autoRun(void){
     // Print values for collsion and reset
     moveStop();
     _delay(0.01);
-    sendPosVectorToPi();
+    
+    if(ultrasonic_6.distanceCm() <= 5){
+      ledRed();
+      sendPosVectorToPiCollision();
+    }
+    else{
+      sendPosVectorToPi();
+    }
     rightMotor.setPulsePos(0);
 
-   if(ultrasonic_6.distanceCm() <= 5){
-      meSerial.println("COLLISION");
-    }
+
     // Go back and update values
     moveBackward();
     _delay(0.6);
@@ -409,7 +512,8 @@ void autoRun(void){
 
   }
   else{
+    ledGreen();
     moveForward();
   }
-
+  ledGreen();
 }
