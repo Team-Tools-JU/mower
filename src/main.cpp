@@ -83,6 +83,10 @@ void ledGreen();
 void ledBlue();
 void ledOff();
 
+void music();
+
+void listenForBtCommand();
+
 /*****************************************************************************************/
 //   Main loop and setup functions
 /*****************************************************************************************/
@@ -94,6 +98,7 @@ void setup() {
   TCCR2B = _BV(CS21);
   attachInterrupt(leftMotor.getIntNum(), isr_process_leftMotor, RISING);
   attachInterrupt(rightMotor.getIntNum(), isr_process_rightMotor, RISING);
+  buzzer.setpin(45);
   rgbled_0.setpin(44);
   rgbled_0.fillPixelsBak(0, 2, 1);
   randomSeed((unsigned long)(lightsensor_12.read() * 123456));
@@ -107,16 +112,8 @@ void setup() {
 
 void loop() {
  
-  String btdata = Read();
-  String data = btdata.substring(0,2);
+  listenForBtCommand();
 
-  
-  if (data != "" && data != nullptr){
-    //test = data;
-    updateState(data);
-  }
-
-  
   mowerDriveState();
   _loop();
 }
@@ -125,8 +122,59 @@ void loop() {
 /*****************************************************************************************/
 //   Functions
 /*****************************************************************************************/
-void music(){
 
+void listenForBtCommand(){
+  String btdata = Read();
+  String data = btdata.substring(0,2);
+
+    if (data != "" && data != nullptr){
+    //test = data;
+    updateState(data);
+  }
+}
+
+void music(){
+  buzzer.tone(262, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(262, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(392, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(392, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(440, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(440, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(392, 1 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(349, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(349, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(330, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(330, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(294, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(294, 0.5 * 1000);
+  _delay(0.02);
+
+  buzzer.tone(262, 1 * 1000);
+  _delay(0.02);
 }
 
 void ledRed(){
@@ -340,6 +388,12 @@ void updateState(String data){
     ledBlue();
     mowerStateGlobal = MOWER_MAN_RIGHT;
     Write("Inne i MR");
+  }
+  else if(data=="XX"){
+    mowerStateGlobal =  MOWER_IDLE;
+    moveStop();
+    music();
+    Write("MUSIC!");
   }
   /* else{
     mower_state_global = MOWER_FAULT;
