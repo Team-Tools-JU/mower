@@ -38,6 +38,8 @@ MeLightSensor lightsensor_12(12);
 MeUltrasonicSensor ultrasonic_6(6); //Ultrasonic sensor on port 6
 MeLineFollower linefollower_7(7);   //Line follow sensor on port 7
 MeGyro gyro_0(0, 0x69);
+MeRGBLed rgbled_0(0, 12);
+MeBuzzer buzzer;
 
 // Gyro variables
 float posZ = 0;
@@ -75,6 +77,12 @@ void updateState(String data);
 
 void mowerDriveState(void);
 
+// LED functions
+void ledRed();
+void ledGreen();
+void ledBlue();
+void ledOff();
+
 /*****************************************************************************************/
 //   Main loop and setup functions
 /*****************************************************************************************/
@@ -86,6 +94,8 @@ void setup() {
   TCCR2B = _BV(CS21);
   attachInterrupt(leftMotor.getIntNum(), isr_process_leftMotor, RISING);
   attachInterrupt(rightMotor.getIntNum(), isr_process_rightMotor, RISING);
+  rgbled_0.setpin(44);
+  rgbled_0.fillPixelsBak(0, 2, 1);
   randomSeed((unsigned long)(lightsensor_12.read() * 123456));
   Serial.begin(115200);
   meSerial.begin(9600);
@@ -115,7 +125,29 @@ void loop() {
 /*****************************************************************************************/
 //   Functions
 /*****************************************************************************************/
+void music(){
 
+}
+
+void ledRed(){
+  rgbled_0.setColor(0,20,0,0);
+  rgbled_0.show();
+}
+
+void ledGreen(){
+  rgbled_0.setColor(0,5,10,0);
+  rgbled_0.show();
+}
+
+void ledBlue(){
+  rgbled_0.setColor(0,0,0,10);
+  rgbled_0.show();
+}
+
+void ledOff(){
+  rgbled_0.setColor(0,0,0,0);
+  rgbled_0.show();
+}
 
 //position functions
 void sendPosVectorToPi(){
@@ -279,27 +311,33 @@ void Write(String string){
 void updateState(String data){
   
   if(data == "AR"){
+    ledGreen();
     mowerStateGlobal = MOWER_AUTO_RUN;
     Write("Inne i AR");
   }
   else if(data=="AS"){
+    ledOff();
     mowerStateGlobal =  MOWER_IDLE;
     Write("Inne i AS");
   }
   else if(data=="MF"){
+    ledBlue();
     mowerStateGlobal = MOWER_MAN_FORWARD;
     Write("Inne i MF");
   }
   else if(data=="MB"){
+    ledBlue();
     mowerStateGlobal = MOWER_MAN_BACKWARDS;
     Write("Inne i MB");
   }
   else if(data=="ML"){
+    ledBlue();
     mowerStateGlobal = MOWER_MAN_LEFT;
     Write("Inne i ML");
 
   }
   else if(data=="MR"){
+    ledBlue();
     mowerStateGlobal = MOWER_MAN_RIGHT;
     Write("Inne i MR");
   }
@@ -317,6 +355,7 @@ void mowerDriveState(){
 
     case MOWER_AUTO_RUN:
       autoRun();
+
     case MOWER_MAN_FORWARD:
       moveForward();
       break;
@@ -332,7 +371,7 @@ void mowerDriveState(){
 
     case MOWER_FAULT:
       //error handling
-      
+      ledRed();
       break;
 
     default:
@@ -356,10 +395,14 @@ void autoRun(void){
     rightMotor.setPulsePos(0);
 
    if(ultrasonic_6.distanceCm() <= 5){
+      ledRed();
       meSerial.println("COLLISION");
     }
+
     // Go back and update values
     moveBackward();
+
+    
     _delay(0.6);
     rightMotor.loop();
     rightMotor.updateCurPos();
@@ -409,7 +452,8 @@ void autoRun(void){
 
   }
   else{
+    ledGreen();
     moveForward();
   }
-
+  ledGreen();
 }
