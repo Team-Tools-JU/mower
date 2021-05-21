@@ -116,9 +116,6 @@ void loop() {
  
   listenForBtCommand();
   mowerDriveState();
-  if (mowerStateGlobal != (MOWER_IDLE || MOWER_AUTO_RUN || MOWER_FAULT)){
-    ultraSonicDistance();
-  }
   _loop();
 }
 
@@ -436,18 +433,22 @@ void mowerDriveState(){
 
     case MOWER_MAN_FORWARD:
       moveForward();
+      ultraSonicDistance();
       oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_BACKWARDS:
       moveBackward();
+      ultraSonicDistance();
       oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_LEFT:
       moveLeft();
+      ultraSonicDistance();
       oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_RIGHT:
       moveRight();
+      ultraSonicDistance();
       oldState = mowerStateGlobal;
       break;
 
