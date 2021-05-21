@@ -61,4 +61,4 @@ The mower is able to run manually by listening to commands through a bluetooth c
 The connection from the Main node to the WiFi node is done with a serial connection.
 
 
-![Mower Flow Chart](https://github.com/Team-Tools-JU/mower/blob/documentationUpdate/MowerFlowChart.png)
+![Mower Flow Chart](https://github.com/Team-Tools-JU/mower/blob/main/MowerFlowChart.png)
