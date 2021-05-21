@@ -30,6 +30,7 @@ typedef enum {
 
 //globals vars
 mowerState_t mowerStateGlobal = MOWER_IDLE;
+mowerState_t oldState = MOWER_IDLE;
 linesensorState_t linesensorStateGlobal = LINESENSOR_NONE;
 MeSerial meSerial(PORT5);
 MeEncoderOnBoard leftMotor(SLOT1);
@@ -250,18 +251,25 @@ void isr_process_rightMotor(void)
 // Ultrasonic sesnor function, return the distance to object in cm.
 int ultraSonicDistance(){
 
+  //5 or less cm
   if(ultrasonic_6.distanceCm() < 5){
-    Write("5 or less cm");
-    collision();
+    Write("4"); 
   }
+  //10 or less cm
   else if(ultrasonic_6.distanceCm() < 10){
-    Write("10 or less cm");
+    Write("3"); 
   }
+  //15 or less cm
   else if(ultrasonic_6.distanceCm() < 15){
-    Write("15 or less cm");
+    Write("2"); 
   }
+  //20 or less cm
   else if(ultrasonic_6.distanceCm() < 20){
-    Write("20 or less cm");
+    Write("1"); 
+  }
+  //more than 20 cm
+  else{
+    Write("0"); 
   }
 
 }
@@ -407,31 +415,48 @@ void updateState(String data){
 
 //main state machince for the mower
 void mowerDriveState(){
+  if(oldState != mowerStateGlobal){
+    meSerial.println("new state");
+  }
   switch(mowerStateGlobal){
     case MOWER_IDLE:
+      if(oldState == MOWER_AUTO_RUN){
+        sendPosVectorToPi();
+      }
       moveStop();
+      oldState = mowerStateGlobal;
       break;
 
     case MOWER_AUTO_RUN:
       autoRun();
+      oldState = mowerStateGlobal;
 
     case MOWER_MAN_FORWARD:
       moveForward();
+      ultraSonicDistance();
+      oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_BACKWARDS:
       moveBackward();
+      ultraSonicDistance();
+      oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_LEFT:
       moveLeft();
+      ultraSonicDistance();
+      oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_RIGHT:
       moveRight();
+      ultraSonicDistance();
+      oldState = mowerStateGlobal;
       break;
 
     case MOWER_FAULT:
       //error handling
       moveStop();
       ledRed();
+      oldState = mowerStateGlobal;
       break;
 
     default:
