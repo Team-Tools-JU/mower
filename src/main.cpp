@@ -27,8 +27,17 @@ typedef enum {
   LINESENSOR_RIGHT,
   LINESENSOR_BOTH
 } linesensorState_t;
+//enumeration for ultrasonic distance states.
+typedef enum {
+  ULTRASONIC_NONE,
+  ULTRASONIC_5CM,
+  ULTRASONIC_10CM,
+  ULTRASONIC_15CM,
+  ULTRASONIC_20CM,
+} ultrasonicState_t;
 
 //globals vars
+ultrasonicState_t ultrasonicStateGlobal = ULTRASONIC_NONE;
 mowerState_t mowerStateGlobal = MOWER_IDLE;
 mowerState_t oldState = MOWER_IDLE;
 linesensorState_t linesensorStateGlobal = LINESENSOR_NONE;
@@ -65,7 +74,7 @@ void moveStop();
 //Sesnsor functions
 void updateLinesensorState();
 void collision();
-int ultraSonicDistance(); // reads the distance
+void sendUltraSonicDistanceToPi(); // reads the distance
 void autoRun(void);
 void updateLinesensorState(void);
 void sendPosVectorToPi();
@@ -249,29 +258,43 @@ void isr_process_rightMotor(void)
 }
 
 // Ultrasonic sesnor function, return the distance to object in cm.
-int ultraSonicDistance(){
+void sendUltraSonicDistanceToPi(){
 
+  ultrasonicState_t newUltrasonicState;
   //5 or less cm
   if(ultrasonic_6.distanceCm() < 5){
-    Write("4"); 
+    newUltrasonicState = ULTRASONIC_5CM;
+
   }
   //10 or less cm
   else if(ultrasonic_6.distanceCm() < 10){
-    Write("3"); 
+   
+    newUltrasonicState = ULTRASONIC_10CM;
+     
   }
   //15 or less cm
   else if(ultrasonic_6.distanceCm() < 15){
-    Write("2"); 
+
+    newUltrasonicState = ULTRASONIC_15CM; 
+   
   }
   //20 or less cm
   else if(ultrasonic_6.distanceCm() < 20){
-    Write("1"); 
+
+    newUltrasonicState = ULTRASONIC_20CM; 
+    
   }
   //more than 20 cm
   else{
-    Write("0"); 
+    
+    newUltrasonicState = ULTRASONIC_NONE;
+    
   }
 
+  if(newUltrasonicState != ultrasonicStateGlobal){
+      ultrasonicStateGlobal = newUltrasonicState;
+      Write(String(ultrasonicStateGlobal)); //only write if its a new value
+  }
 }
 // function to update the global state of the lines sensor.
 void updateLinesensorState(){
@@ -433,22 +456,22 @@ void mowerDriveState(){
 
     case MOWER_MAN_FORWARD:
       moveForward();
-      ultraSonicDistance();
+      sendUltraSonicDistanceToPi();
       oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_BACKWARDS:
       moveBackward();
-      ultraSonicDistance();
+      sendUltraSonicDistanceToPi();
       oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_LEFT:
       moveLeft();
-      ultraSonicDistance();
+      sendUltraSonicDistanceToPi();
       oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_RIGHT:
       moveRight();
-      ultraSonicDistance();
+      sendUltraSonicDistanceToPi();
       oldState = mowerStateGlobal;
       break;
 
