@@ -25,10 +25,21 @@ typedef enum {
   LINESENSOR_NONE,
   LINESENSOR_LEFT,
   LINESENSOR_RIGHT,
-  LINESENSOR_BOTH
+  LINESENSOR_BOTH,
+  LINESENSOR_FAULT = 99
 } linesensorState_t;
 
+typedef enum {
+  ULTRASONIC_NONE = 0,
+  ULTRASONIC_5CM,
+  ULTRASONIC_10CM,
+  ULTRASONIC_15CM,
+  ULTRASONIC_20CM,
+  ULTRASONIC_FAULT = 99
+} ultrasonicState_t;
+
 //globals vars
+ultrasonicState_t ultrasonicStateGlobal = ULTRASONIC_NONE;
 mowerState_t mowerStateGlobal = MOWER_IDLE;
 mowerState_t oldState = MOWER_IDLE;
 linesensorState_t linesensorStateGlobal = LINESENSOR_NONE;
@@ -65,7 +76,7 @@ void moveStop();
 //Sesnsor functions
 void updateLinesensorState();
 void collision();
-int ultraSonicDistance(); // reads the distance
+void sendUltraSonicDistance(); // reads the distance
 void autoRun(void);
 void updateLinesensorState(void);
 void sendPosVectorToPi();
@@ -249,29 +260,43 @@ void isr_process_rightMotor(void)
 }
 
 // Ultrasonic sesnor function, return the distance to object in cm.
-int ultraSonicDistance(){
+void sendUltraSonicDistance(){
 
+  ultrasonicState_t newUltrasonicState = ULTRASONIC_FAULT; //set value to fault in the case that it is not updated...
   //5 or less cm
   if(ultrasonic_6.distanceCm() < 5){
-    Write("4"); 
+    newUltrasonicState = ULTRASONIC_5CM;
+
   }
   //10 or less cm
   else if(ultrasonic_6.distanceCm() < 10){
-    Write("3"); 
+   
+    newUltrasonicState = ULTRASONIC_10CM;
+     
   }
   //15 or less cm
   else if(ultrasonic_6.distanceCm() < 15){
-    Write("2"); 
+
+    newUltrasonicState = ULTRASONIC_15CM; 
+   
   }
   //20 or less cm
   else if(ultrasonic_6.distanceCm() < 20){
-    Write("1"); 
+
+    newUltrasonicState = ULTRASONIC_20CM; 
+    
   }
   //more than 20 cm
   else{
-    Write("0"); 
+    
+    newUltrasonicState = ULTRASONIC_NONE;
+    
   }
 
+  if(newUltrasonicState != ultrasonicStateGlobal){
+      ultrasonicStateGlobal = newUltrasonicState;
+      Write(String(ultrasonicStateGlobal)); //only write if its a new value
+  }
 }
 // function to update the global state of the lines sensor.
 void updateLinesensorState(){
@@ -373,39 +398,40 @@ void updateState(String data){
   if(data == "AR"){
     ledGreen();
     mowerStateGlobal = MOWER_AUTO_RUN;
-    Write("Inne i AR");
+    //Write("Inne i AR");
   }
   else if(data=="AS"){
     ledOff();
     mowerStateGlobal =  MOWER_IDLE;
-    Write("Inne i AS");
+    //Write("Inne i AS");
   }
   else if(data=="MF"){
     ledBlue();
     mowerStateGlobal = MOWER_MAN_FORWARD;
-    Write("Inne i MF");
+   // Write("Inne i MF");
   }
   else if(data=="MB"){
     ledBlue();
     mowerStateGlobal = MOWER_MAN_BACKWARDS;
-    Write("Inne i MB");
+    //Write("Inne i MB");
   }
   else if(data=="ML"){
     ledBlue();
     mowerStateGlobal = MOWER_MAN_LEFT;
-    Write("Inne i ML");
+    //Write("Inne i ML");
 
   }
   else if(data=="MR"){
     ledBlue();
     mowerStateGlobal = MOWER_MAN_RIGHT;
-    Write("Inne i MR");
+    //Write("Inne i MR");
   }
   else if(data=="XX"){
+    ledOff();
     mowerStateGlobal =  MOWER_IDLE;
     moveStop();
     music();
-    Write("MUSIC!");
+    //Write("MUSIC!");
   }
   else{
     mowerStateGlobal = MOWER_FAULT;
@@ -424,6 +450,7 @@ void mowerDriveState(){
         sendPosVectorToPi();
       }
       moveStop();
+      sendUltraSonicDistance();
       oldState = mowerStateGlobal;
       break;
 
@@ -433,22 +460,22 @@ void mowerDriveState(){
 
     case MOWER_MAN_FORWARD:
       moveForward();
-      ultraSonicDistance();
+      sendUltraSonicDistance();
       oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_BACKWARDS:
       moveBackward();
-      ultraSonicDistance();
+      sendUltraSonicDistance();
       oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_LEFT:
       moveLeft();
-      ultraSonicDistance();
+      sendUltraSonicDistance();
       oldState = mowerStateGlobal;
       break;
     case MOWER_MAN_RIGHT:
       moveRight();
-      ultraSonicDistance();
+      sendUltraSonicDistance();
       oldState = mowerStateGlobal;
       break;
 
