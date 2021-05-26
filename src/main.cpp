@@ -220,9 +220,6 @@ void sendPosVectorToPiCollision(){
   meSerial.println(String(posZ) + " " + String(distance) + " " + "1");
 }
 
-// long getPos(){
-//   return ((rightMotor.getCurPos()*124.4)/360);
-// }
 
 //Auriga functions
 void _loop() {
@@ -398,40 +395,32 @@ void updateState(String data){
   if(data == "AR"){
     ledGreen();
     mowerStateGlobal = MOWER_AUTO_RUN;
-    //Write("Inne i AR");
   }
   else if(data=="AS"){
     ledOff();
     mowerStateGlobal =  MOWER_IDLE;
-    //Write("Inne i AS");
   }
   else if(data=="MF"){
     ledBlue();
     mowerStateGlobal = MOWER_MAN_FORWARD;
-   // Write("Inne i MF");
   }
   else if(data=="MB"){
     ledBlue();
     mowerStateGlobal = MOWER_MAN_BACKWARDS;
-    //Write("Inne i MB");
   }
   else if(data=="ML"){
     ledBlue();
     mowerStateGlobal = MOWER_MAN_LEFT;
-    //Write("Inne i ML");
-
   }
   else if(data=="MR"){
     ledBlue();
     mowerStateGlobal = MOWER_MAN_RIGHT;
-    //Write("Inne i MR");
   }
   else if(data=="XX"){
     ledOff();
     mowerStateGlobal =  MOWER_IDLE;
     moveStop();
     music();
-    //Write("MUSIC!");
   }
   else{
     mowerStateGlobal = MOWER_FAULT;
